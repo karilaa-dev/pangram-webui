@@ -43,6 +43,41 @@
       --radius-sm: 4px;
       --font-display: 'Syne', sans-serif;
       --font-mono: 'DM Mono', monospace;
+      --noise-opacity: 0.03;
+      --grid-opacity: 0.3;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f8f7f4;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f0efec;
+      --bg-elevated: #e8e7e4;
+      --border: #d4d3d0;
+      --border-subtle: #e0dfdc;
+      --text-primary: #0a0a09;
+      --text-secondary: #3d3c3a;
+      --text-muted: #5c5b58;
+      --accent: #ea580c;
+      --accent-hover: #c2410c;
+      --accent-glow: rgba(234, 88, 12, 0.2);
+      --accent-subtle: rgba(234, 88, 12, 0.08);
+      --human: #16a34a;
+      --human-bg: rgba(22, 163, 74, 0.1);
+      --human-border: rgba(22, 163, 74, 0.25);
+      --ai: #dc2626;
+      --ai-bg: rgba(220, 38, 38, 0.1);
+      --ai-border: rgba(220, 38, 38, 0.25);
+      --mixed: #d97706;
+      --mixed-bg: rgba(217, 119, 6, 0.1);
+      --mixed-border: rgba(217, 119, 6, 0.25);
+      --noise-opacity: 0.02;
+      --grid-opacity: 0.15;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 
     * {
@@ -56,7 +91,7 @@
       background: var(--bg-primary);
       color: var(--text-primary);
       min-height: 100vh;
-      line-height: 1.6;
+      line-height: 1.8;
       position: relative;
     }
 
@@ -66,9 +101,71 @@
       position: fixed;
       inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-      opacity: 0.03;
+      opacity: var(--noise-opacity);
       pointer-events: none;
       z-index: 9999;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 1000;
+      width: 44px;
+      height: 44px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .theme-toggle:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--accent);
+      transform: scale(1.05);
+    }
+
+    .theme-toggle svg {
+      width: 20px;
+      height: 20px;
+      color: var(--accent);
+      transition: transform 0.4s ease;
+    }
+
+    .theme-toggle:hover svg {
+      transform: rotate(15deg);
+    }
+
+    .theme-toggle .icon-sun,
+    .theme-toggle .icon-moon {
+      position: absolute;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .theme-toggle .icon-sun {
+      opacity: 0;
+      transform: scale(0.8) rotate(-90deg);
+    }
+
+    .theme-toggle .icon-moon {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+
+    [data-theme="light"] .theme-toggle .icon-sun {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+
+    [data-theme="light"] .theme-toggle .icon-moon {
+      opacity: 0;
+      transform: scale(0.8) rotate(90deg);
     }
 
     /* Sidebar Toggle Button */
@@ -266,11 +363,11 @@
 
     .history-item-delete {
       position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 24px;
-      height: 24px;
-      border-radius: var(--radius-sm);
+      top: 6px;
+      right: 6px;
+      width: 18px;
+      height: 18px;
+      border-radius: 2px;
       background: var(--bg-secondary);
       border: 1px solid var(--border);
       color: var(--text-muted);
@@ -279,7 +376,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 11px;
+      line-height: 1;
       transition: all 0.2s;
     }
 
@@ -311,7 +409,7 @@
         linear-gradient(var(--border-subtle) 1px, transparent 1px),
         linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
       background-size: 60px 60px;
-      opacity: 0.3;
+      opacity: var(--grid-opacity);
       pointer-events: none;
     }
 
@@ -341,7 +439,7 @@
       font-size: 56px;
       font-weight: 800;
       letter-spacing: -0.02em;
-      background: linear-gradient(135deg, var(--orange-400) 0%, var(--orange-600) 50%, var(--orange-700) 100%);
+      background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent) 50%, var(--accent-hover) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -354,7 +452,7 @@
       position: absolute;
       left: 0;
       top: 0;
-      background: linear-gradient(135deg, var(--orange-400) 0%, var(--orange-600) 50%, var(--orange-700) 100%);
+      background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent) 50%, var(--accent-hover) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -375,6 +473,7 @@
       background: var(--bg-secondary);
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
       padding: 32px;
       width: 100%;
       max-width: 720px;
@@ -412,8 +511,8 @@
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       font-family: var(--font-mono);
-      font-size: 14px;
-      line-height: 1.7;
+      font-size: 16px;
+      line-height: 1.9;
       resize: vertical;
       transition: all 0.2s;
     }
@@ -645,8 +744,8 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 28px;
-      line-height: 2;
-      font-size: 14px;
+      line-height: 2.2;
+      font-size: 16px;
     }
 
     .segment {
@@ -823,26 +922,36 @@
     .progress-section {
       text-align: center;
       margin-bottom: 28px;
+      position: relative;
+      width: 220px;
+      margin: 0 auto 28px;
+    }
+
+    .progress-arc-wrapper {
+      position: relative;
+      width: 220px;
+      height: 130px;
     }
 
     .circular-progress {
-      width: 180px;
-      height: 180px;
-      margin: 0 auto 20px;
+      width: 220px;
+      height: 130px;
+      overflow: visible;
     }
 
     .circular-progress-bg {
       fill: none;
-      stroke: var(--border);
-      stroke-width: 10;
+      stroke: var(--human);
+      stroke-width: 14;
+      stroke-linecap: round;
+      opacity: 0.3;
     }
 
     .circular-progress-fill {
       fill: none;
-      stroke-width: 10;
+      stroke: var(--ai);
+      stroke-width: 14;
       stroke-linecap: round;
-      transform: rotate(-90deg);
-      transform-origin: center;
       transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -850,23 +959,32 @@
     .circular-progress-fill.ai { stroke: var(--ai); }
     .circular-progress-fill.mixed { stroke: var(--mixed); }
 
-    .progress-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
+
+    .progress-text {
+      margin-top: 12px;
     }
 
     .progress-value {
       font-family: var(--font-display);
-      font-size: 44px;
+      font-size: 42px;
       font-weight: 800;
       letter-spacing: -0.02em;
+      color: var(--text-primary);
+      line-height: 1;
     }
 
-    .progress-value.human { color: var(--human); }
-    .progress-value.ai { color: var(--ai); }
-    .progress-value.mixed { color: var(--mixed); }
+    .progress-value .percent {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .progress-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
 
     /* Score Breakdown */
     .score-breakdown {
@@ -1078,6 +1196,22 @@
 </head>
 <body>
   <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
   <div class="app-layout">
@@ -1174,12 +1308,16 @@
               </div>
 
               <div class="progress-section">
-                <svg class="circular-progress" viewBox="0 0 180 180">
-                  <circle class="circular-progress-bg" cx="90" cy="90" r="76"/>
-                  <circle class="circular-progress-fill" id="progress-fill" cx="90" cy="90" r="76"/>
-                </svg>
-                <div class="progress-value" id="progress-value">0%</div>
-                <div class="progress-label" id="progress-label">Human Written</div>
+                <div class="progress-arc-wrapper">
+                  <svg class="circular-progress" viewBox="0 0 220 130">
+                    <path class="circular-progress-bg" d="M 18 115 A 92 92 0 0 1 202 115" />
+                    <path class="circular-progress-fill" id="progress-fill" d="M 18 115 A 92 92 0 0 1 202 115" />
+                  </svg>
+                </div>
+                <div class="progress-text">
+                  <div class="progress-value" id="progress-value">0<span class="percent">%</span></div>
+                  <div class="progress-label" id="progress-label">Human Written</div>
+                </div>
               </div>
 
               <div class="score-breakdown" id="score-breakdown"></div>
@@ -1252,6 +1390,35 @@
       }
     };
 
+    // Theme Manager
+    const ThemeManager = {
+      STORAGE_KEY: 'pangram_theme',
+
+      init() {
+        const savedTheme = localStorage.getItem(this.STORAGE_KEY);
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        this.set(theme);
+      },
+
+      get() {
+        return document.documentElement.getAttribute('data-theme') || 'dark';
+      },
+
+      set(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem(this.STORAGE_KEY, theme);
+      },
+
+      toggle() {
+        const current = this.get();
+        this.set(current === 'dark' ? 'light' : 'dark');
+      }
+    };
+
+    // Initialize theme
+    ThemeManager.init();
+
     // App State
     const AppState = {
       mode: 'input',
@@ -1276,6 +1443,7 @@
     const backToInput = document.getElementById('back-to-input');
     const clearHistoryBtn = document.getElementById('clear-history');
     const panelTabs = document.querySelectorAll('.panel-tab');
+    const themeToggle = document.getElementById('theme-toggle');
 
     // Initialize
     renderHistoryList();
@@ -1303,6 +1471,10 @@
 
     sidebarOverlay.addEventListener('click', () => {
       toggleSidebar(false);
+    });
+
+    themeToggle.addEventListener('click', () => {
+      ThemeManager.toggle();
     });
 
     clearHistoryBtn.addEventListener('click', () => {
@@ -1499,14 +1671,13 @@
       }
 
       const progressFill = document.getElementById('progress-fill');
-      const circumference = 2 * Math.PI * 76;
-      progressFill.style.strokeDasharray = circumference;
-      progressFill.style.strokeDashoffset = circumference - (dominantScore / 100) * circumference;
+      const arcLength = Math.PI * 92; // Semi-circle arc length
+      progressFill.style.strokeDasharray = arcLength;
+      progressFill.style.strokeDashoffset = arcLength - (aiScore / 100) * arcLength;
       progressFill.className = `circular-progress-fill ${dominantClass}`;
 
       const progressValue = document.getElementById('progress-value');
-      progressValue.textContent = `${dominantScore}%`;
-      progressValue.className = `progress-value ${dominantClass}`;
+      progressValue.innerHTML = `${dominantScore}<span class="percent">%</span>`;
 
       document.getElementById('progress-label').textContent = dominantLabel;
 
