@@ -653,22 +653,30 @@
       padding: 2px 4px;
       margin: 0 -2px;
       border-radius: 2px;
-      transition: all 0.2s;
-    }
-
-    .segment.human {
-      background: var(--human-bg);
-      border-bottom: 2px solid var(--human);
     }
 
     .segment.ai {
       background: var(--ai-bg);
-      border-bottom: 2px solid var(--ai);
     }
 
-    .segment.mixed {
-      background: var(--mixed-bg);
-      border-bottom: 2px solid var(--mixed);
+    .segment {
+      cursor: pointer;
+    }
+
+    .segment.highlighted {
+      border-bottom: 2px solid;
+    }
+
+    .segment.highlighted.human {
+      border-bottom-color: var(--human);
+    }
+
+    .segment.highlighted.ai {
+      border-bottom-color: var(--ai);
+    }
+
+    .segment.highlighted.mixed {
+      border-bottom-color: var(--mixed);
     }
 
     .legend {
@@ -942,6 +950,13 @@
       background: var(--bg-tertiary);
       border-radius: var(--radius-sm);
       border-left: 3px solid;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .segment-detail-item:hover {
+      background: var(--bg-elevated);
+      transform: translateX(4px);
     }
 
     .segment-detail-item.human { border-left-color: var(--human); }
@@ -1525,10 +1540,20 @@
       const segmentsText = document.getElementById('segments-text');
 
       if (windows.length > 0) {
-        segmentsText.innerHTML = windows.map(win => {
+        segmentsText.innerHTML = windows.map((win, index) => {
           const segClass = getSegmentClass(win.label);
-          return `<span class="segment ${segClass}">${escapeHtml(win.text)}</span>`;
+          return `<span class="segment ${segClass}" data-segment-index="${index}">${escapeHtml(win.text)}</span>`;
         }).join('');
+
+        // Add hover handlers for segments
+        segmentsText.querySelectorAll('.segment').forEach(segment => {
+          segment.addEventListener('mouseenter', () => {
+            segmentsText.querySelectorAll('.segment.highlighted').forEach(seg => {
+              seg.classList.remove('highlighted');
+            });
+            segment.classList.add('highlighted');
+          });
+        });
       } else {
         segmentsText.innerHTML = `<span>${escapeHtml(text)}</span>`;
       }
@@ -1536,15 +1561,36 @@
       // Segment details
       const segmentDetailList = document.getElementById('segment-detail-list');
       if (windows.length > 0) {
-        segmentDetailList.innerHTML = windows.map(win => {
+        segmentDetailList.innerHTML = windows.map((win, index) => {
           const segClass = getSegmentClass(win.label);
           return `
-            <div class="segment-detail-item ${segClass}">
+            <div class="segment-detail-item ${segClass}" data-segment-index="${index}">
               <div class="segment-detail-label ${segClass}">${win.label || 'Unknown'}</div>
               <div class="segment-detail-text">${escapeHtml(win.text.substring(0, 150))}${win.text.length > 150 ? '...' : ''}</div>
             </div>
           `;
         }).join('');
+
+        // Add click handlers for segment detail items
+        segmentDetailList.querySelectorAll('.segment-detail-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const index = item.dataset.segmentIndex;
+            const targetSegment = segmentsText.querySelector(`.segment[data-segment-index="${index}"]`);
+
+            if (targetSegment) {
+              // Remove highlight from all segments
+              segmentsText.querySelectorAll('.segment.highlighted').forEach(seg => {
+                seg.classList.remove('highlighted');
+              });
+
+              // Add highlight to target segment
+              targetSegment.classList.add('highlighted');
+
+              // Scroll segment into view
+              targetSegment.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          });
+        });
       } else {
         segmentDetailList.innerHTML = '<div class="history-empty">No segment details available</div>';
       }
