@@ -1,1545 +1,1676 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pangram - AI Text Detector</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-primary: #050505;
-      --bg-secondary: #0c0c0c;
-      --bg-tertiary: #141414;
-      --bg-elevated: #1a1a1a;
-      --border: #2a2a2a;
-      --border-subtle: #1f1f1f;
-      --text-primary: #f5f5f5;
-      --text-secondary: #999;
-      --text-muted: #666;
-      --orange-50: #fff7ed;
-      --orange-100: #ffedd5;
-      --orange-200: #fed7aa;
-      --orange-300: #fdba74;
-      --orange-400: #fb923c;
-      --orange-500: #f97316;
-      --orange-600: #ea580c;
-      --orange-700: #c2410c;
-      --accent: #f97316;
-      --accent-hover: #fb923c;
-      --accent-glow: rgba(249, 115, 22, 0.4);
-      --accent-subtle: rgba(249, 115, 22, 0.1);
-      --human: #22c55e;
-      --human-bg: rgba(34, 197, 94, 0.12);
-      --human-border: rgba(34, 197, 94, 0.3);
-      --ai: #ef4444;
-      --ai-bg: rgba(239, 68, 68, 0.12);
-      --ai-border: rgba(239, 68, 68, 0.3);
-      --mixed: #f59e0b;
-      --mixed-bg: rgba(245, 158, 11, 0.12);
-      --mixed-border: rgba(245, 158, 11, 0.3);
-      --radius: 8px;
-      --radius-sm: 4px;
-      --font-display: 'Syne', sans-serif;
-      --font-mono: 'DM Mono', monospace;
-      --noise-opacity: 0.03;
-      --grid-opacity: 0.3;
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-    }
-
-    [data-theme="light"] {
-      --bg-primary: #f8f7f4;
-      --bg-secondary: #ffffff;
-      --bg-tertiary: #f0efec;
-      --bg-elevated: #e8e7e4;
-      --border: #d4d3d0;
-      --border-subtle: #e0dfdc;
-      --text-primary: #0a0a09;
-      --text-secondary: #3d3c3a;
-      --text-muted: #5c5b58;
-      --accent: #ea580c;
-      --accent-hover: #c2410c;
-      --accent-glow: rgba(234, 88, 12, 0.2);
-      --accent-subtle: rgba(234, 88, 12, 0.08);
-      --human: #16a34a;
-      --human-bg: rgba(22, 163, 74, 0.1);
-      --human-border: rgba(22, 163, 74, 0.25);
-      --ai: #dc2626;
-      --ai-bg: rgba(220, 38, 38, 0.1);
-      --ai-border: rgba(220, 38, 38, 0.25);
-      --mixed: #d97706;
-      --mixed-bg: rgba(217, 119, 6, 0.1);
-      --mixed-border: rgba(217, 119, 6, 0.25);
-      --noise-opacity: 0.02;
-      --grid-opacity: 0.15;
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: var(--font-mono);
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-      line-height: 1.8;
-      position: relative;
-    }
-
-    /* Noise texture overlay */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-      opacity: var(--noise-opacity);
-      pointer-events: none;
-      z-index: 9999;
-    }
-
-    /* Theme Toggle */
-    .theme-toggle {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
-      z-index: 1000;
-      width: 44px;
-      height: 44px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .theme-toggle:hover {
-      background: var(--bg-tertiary);
-      border-color: var(--accent);
-      transform: scale(1.05);
-    }
-
-    .theme-toggle svg {
-      width: 20px;
-      height: 20px;
-      color: var(--accent);
-      transition: transform 0.4s ease;
-    }
-
-    .theme-toggle:hover svg {
-      transform: rotate(15deg);
-    }
-
-    .theme-toggle .icon-sun,
-    .theme-toggle .icon-moon {
-      position: absolute;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-
-    .theme-toggle .icon-sun {
-      opacity: 0;
-      transform: scale(0.8) rotate(-90deg);
-    }
-
-    .theme-toggle .icon-moon {
-      opacity: 1;
-      transform: scale(1) rotate(0deg);
-    }
-
-    [data-theme="light"] .theme-toggle .icon-sun {
-      opacity: 1;
-      transform: scale(1) rotate(0deg);
-    }
-
-    [data-theme="light"] .theme-toggle .icon-moon {
-      opacity: 0;
-      transform: scale(0.8) rotate(90deg);
-    }
-
-    /* Sidebar Toggle Button */
-    .sidebar-toggle {
-      display: none;
-      position: fixed;
-      top: 16px;
-      left: 16px;
-      z-index: 1000;
-      width: 44px;
-      height: 44px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--accent);
-      font-size: 20px;
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .sidebar-toggle:hover {
-      background: var(--bg-tertiary);
-      border-color: var(--accent);
-      box-shadow: 0 0 20px var(--accent-glow);
-    }
-
-    /* App Layout */
-    .app-layout {
-      display: flex;
-      min-height: 100vh;
-    }
-
-    /* History Sidebar */
-    .history-sidebar {
-      width: 300px;
-      flex-shrink: 0;
-      background: var(--bg-secondary);
-      border-right: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .sidebar-header {
-      padding: 24px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: linear-gradient(180deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
-    }
-
-    .sidebar-header h2 {
-      font-family: var(--font-display);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-    }
-
-    .sidebar-header button {
-      padding: 6px 12px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all 0.2s;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .sidebar-header button:hover {
-      background: var(--ai-bg);
-      border-color: var(--ai);
-      color: var(--ai);
-    }
-
-    .history-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    }
-
-    .history-empty {
-      padding: 48px 20px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 13px;
-      font-style: italic;
-    }
-
-    .history-item {
-      padding: 16px;
-      border-radius: var(--radius);
-      cursor: pointer;
-      margin-bottom: 8px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border-subtle);
-      position: relative;
-      transition: all 0.2s;
-    }
-
-    .history-item::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: transparent;
-      border-radius: var(--radius) 0 0 var(--radius);
-      transition: background 0.2s;
-    }
-
-    .history-item:hover {
-      border-color: var(--border);
-      transform: translateX(4px);
-    }
-
-    .history-item:hover::before {
-      background: var(--accent);
-    }
-
-    .history-item.active {
-      border-color: var(--accent);
-      background: var(--accent-subtle);
-    }
-
-    .history-item.active::before {
-      background: var(--accent);
-    }
-
-    .history-item-preview {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 12px;
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .history-item-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .history-item-badge {
-      font-family: var(--font-mono);
-      font-size: 9px;
-      font-weight: 500;
-      padding: 4px 8px;
-      border-radius: 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      border: 1px solid;
-    }
-
-    .history-item-badge.human {
-      background: var(--human-bg);
-      color: var(--human);
-      border-color: var(--human-border);
-    }
-
-    .history-item-badge.ai {
-      background: var(--ai-bg);
-      color: var(--ai);
-      border-color: var(--ai-border);
-    }
-
-    .history-item-badge.mixed {
-      background: var(--mixed-bg);
-      color: var(--mixed);
-      border-color: var(--mixed-border);
-    }
-
-    .history-item-time {
-      font-size: 10px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .history-item-delete {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 18px;
-      height: 18px;
-      border-radius: 2px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      cursor: pointer;
-      opacity: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      line-height: 1;
-      transition: all 0.2s;
-    }
-
-    .history-item:hover .history-item-delete {
-      opacity: 1;
-    }
-
-    .history-item-delete:hover {
-      background: var(--ai-bg);
-      border-color: var(--ai);
-      color: var(--ai);
-    }
-
-    /* Main Content */
-    .main-content {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    /* Decorative grid pattern */
-    .main-content::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--border-subtle) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
-      background-size: 60px 60px;
-      opacity: var(--grid-opacity);
-      pointer-events: none;
-    }
-
-    /* Input Mode */
-    .input-mode {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 32px;
-      min-height: 100vh;
-      position: relative;
-      z-index: 1;
-    }
-
-    .input-mode.hidden {
-      display: none;
-    }
-
-    .input-mode header {
-      text-align: center;
-      margin-bottom: 48px;
-    }
-
-    .logo {
-      font-family: var(--font-display);
-      font-size: 56px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent) 50%, var(--accent-hover) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 0 80px var(--accent-glow);
-      position: relative;
-    }
-
-    .logo::after {
-      content: 'Pangram';
-      position: absolute;
-      left: 0;
-      top: 0;
-      background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent) 50%, var(--accent-hover) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: blur(30px);
-      opacity: 0.5;
-    }
-
-    .tagline {
-      font-family: var(--font-mono);
-      color: var(--text-muted);
-      margin-top: 12px;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.2em;
-    }
-
-    .card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
-      padding: 32px;
-      width: 100%;
-      max-width: 720px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    }
-
-    .input-section label {
-      display: block;
-      font-family: var(--font-display);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 220px;
-      padding: 20px;
-      background: var(--bg-primary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-family: var(--font-mono);
-      font-size: 16px;
-      line-height: 1.9;
-      resize: vertical;
-      transition: all 0.2s;
-    }
-
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-subtle), 0 0 30px var(--accent-glow);
-    }
-
-    textarea::placeholder {
-      color: var(--text-muted);
-    }
-
-    .char-count {
-      text-align: right;
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .button-row {
-      margin-top: 24px;
-      display: flex;
-      gap: 12px;
-    }
-
-    button {
-      font-family: var(--font-display);
-      padding: 14px 32px;
-      font-size: 13px;
-      font-weight: 700;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%);
-      color: var(--bg-primary);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-primary::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, var(--orange-400) 0%, var(--orange-500) 100%);
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .btn-primary:hover:not(:disabled)::before {
-      opacity: 1;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      box-shadow: 0 0 30px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.4);
-      transform: translateY(-2px);
-    }
-
-    .btn-primary span {
-      position: relative;
-      z-index: 1;
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      background: var(--bg-tertiary);
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-    }
-
-    .btn-secondary:hover {
-      background: var(--bg-elevated);
-      color: var(--text-primary);
-      border-color: var(--text-muted);
-    }
-
-    .error-message {
-      background: var(--ai-bg);
-      border: 1px solid var(--ai-border);
-      border-radius: var(--radius-sm);
-      padding: 16px 20px;
-      color: var(--ai);
-      margin-top: 20px;
-      display: none;
-      font-size: 13px;
-    }
-
-    .error-message.visible {
-      display: block;
-    }
-
-    .loading {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      padding: 48px;
-      color: var(--text-secondary);
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .loading.visible {
-      display: flex;
-    }
-
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Results Mode */
-    .results-mode {
-      display: none;
-      flex: 1;
-    }
-
-    .results-mode.visible {
-      display: flex;
-    }
-
-    /* Document View */
-    .document-view {
-      flex: 1;
-      padding: 40px;
-      overflow-y: auto;
-      min-width: 0;
-      position: relative;
-      z-index: 1;
-    }
-
-    .doc-header {
-      margin-bottom: 32px;
-    }
-
-    .doc-title {
-      font-family: var(--font-display);
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      letter-spacing: -0.02em;
-    }
-
-    .doc-meta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      color: var(--text-muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .doc-prediction-pill {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 500;
-      padding: 6px 12px;
-      border-radius: 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      border: 1px solid;
-    }
-
-    .doc-prediction-pill.human {
-      background: var(--human-bg);
-      color: var(--human);
-      border-color: var(--human-border);
-    }
-
-    .doc-prediction-pill.ai {
-      background: var(--ai-bg);
-      color: var(--ai);
-      border-color: var(--ai-border);
-    }
-
-    .doc-prediction-pill.mixed {
-      background: var(--mixed-bg);
-      color: var(--mixed);
-      border-color: var(--mixed-border);
-    }
-
-    .back-to-input {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--accent);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      cursor: pointer;
-      margin-bottom: 32px;
-      background: none;
-      border: none;
-      padding: 8px 0;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      transition: all 0.2s;
-    }
-
-    .back-to-input:hover {
-      color: var(--accent-hover);
-      transform: translateX(-4px);
-    }
-
-    .segments-text {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      line-height: 2.2;
-      font-size: 16px;
-      white-space: pre-wrap;
-    }
-
-    .segment {
-      padding: 2px 4px;
-      margin: 0 -2px;
-      border-radius: 2px;
-    }
-
-    .segment.ai {
-      background: var(--ai-bg);
-    }
-
-    .segment {
-      cursor: pointer;
-    }
-
-    .segment.highlighted {
-      border-bottom: 2px solid;
-    }
-
-    .segment.highlighted.human {
-      border-bottom-color: var(--human);
-    }
-
-    .segment.highlighted.ai {
-      border-bottom-color: var(--ai);
-    }
-
-    .segment.highlighted.mixed {
-      border-bottom-color: var(--mixed);
-    }
-
-    .legend {
-      display: flex;
-      gap: 32px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .legend-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-    }
-
-    .legend-dot.human { background: var(--human); }
-    .legend-dot.ai { background: var(--ai); }
-    .legend-dot.mixed { background: var(--mixed); }
-
-    /* Results Panel */
-    .results-panel {
-      width: 420px;
-      flex-shrink: 0;
-      background: var(--bg-secondary);
-      border-left: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    .panel-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-tertiary);
-    }
-
-    .panel-tab {
-      flex: 1;
-      padding: 18px;
-      text-align: center;
-      font-family: var(--font-display);
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      transition: all 0.2s;
-    }
-
-    .panel-tab:hover {
-      color: var(--text-secondary);
-    }
-
-    .panel-tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-
-    .panel-content {
-      padding: 28px;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    /* Prediction Card */
-    .prediction-card {
-      text-align: center;
-      padding: 32px 24px;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius);
-      margin-bottom: 28px;
-      border: 1px solid var(--border);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .prediction-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      opacity: 0.05;
-      pointer-events: none;
-    }
-
-    .prediction-card.human::before {
-      background: radial-gradient(circle at center, var(--human), transparent 70%);
-    }
-
-    .prediction-card.ai::before {
-      background: radial-gradient(circle at center, var(--ai), transparent 70%);
-    }
-
-    .prediction-card.mixed::before {
-      background: radial-gradient(circle at center, var(--mixed), transparent 70%);
-    }
-
-    .prediction-icon {
-      font-size: 56px;
-      margin-bottom: 16px;
-      position: relative;
-    }
-
-    .prediction-card.human .prediction-icon { color: var(--human); }
-    .prediction-card.ai .prediction-icon { color: var(--ai); }
-    .prediction-card.mixed .prediction-icon { color: var(--mixed); }
-
-    .prediction-text {
-      font-family: var(--font-display);
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: -0.01em;
-    }
-
-    .prediction-subtext {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    /* Circular Progress */
-    .progress-section {
-      text-align: center;
-      margin-bottom: 28px;
-      position: relative;
-      width: 220px;
-      margin: 0 auto 28px;
-    }
-
-    .progress-arc-wrapper {
-      position: relative;
-      width: 220px;
-      height: 130px;
-    }
-
-    .circular-progress {
-      width: 220px;
-      height: 130px;
-      overflow: visible;
-    }
-
-    .circular-progress-bg {
-      fill: none;
-      stroke: var(--human);
-      stroke-width: 14;
-      stroke-linecap: round;
-      opacity: 0.3;
-    }
-
-    .circular-progress-fill {
-      fill: none;
-      stroke: var(--ai);
-      stroke-width: 14;
-      stroke-linecap: round;
-      transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .circular-progress-fill.human { stroke: var(--human); }
-    .circular-progress-fill.ai { stroke: var(--ai); }
-    .circular-progress-fill.mixed { stroke: var(--mixed); }
-
-
-    .progress-text {
-      margin-top: 12px;
-    }
-
-    .progress-value {
-      font-family: var(--font-display);
-      font-size: 42px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-      line-height: 1;
-    }
-
-    .progress-value .percent {
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .progress-label {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin-top: 6px;
-    }
-
-
-    /* Score Breakdown */
-    .score-breakdown {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .score-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .score-row-label {
-      width: 100px;
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .score-row-bar {
-      flex: 1;
-      height: 6px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .score-row-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .score-row-fill.human { background: var(--human); }
-    .score-row-fill.ai { background: var(--ai); }
-    .score-row-fill.mixed { background: var(--mixed); }
-
-    .score-row-value {
-      width: 52px;
-      text-align: right;
-      font-family: var(--font-display);
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .score-row-value.human { color: var(--human); }
-    .score-row-value.ai { color: var(--ai); }
-    .score-row-value.mixed { color: var(--mixed); }
-
-    /* Segment Details */
-    .segment-details {
-      margin-top: 24px;
-    }
-
-    .segment-details summary {
-      cursor: pointer;
-      font-size: 12px;
-      color: var(--text-muted);
-      padding: 14px 16px;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-sm);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .segment-details summary:hover {
-      color: var(--text-secondary);
-    }
-
-    .segment-detail-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .segment-detail-item {
-      padding: 16px;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-sm);
-      border-left: 3px solid;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .segment-detail-item:hover {
-      background: var(--bg-elevated);
-      transform: translateX(4px);
-    }
-
-    .segment-detail-item.human { border-left-color: var(--human); }
-    .segment-detail-item.ai { border-left-color: var(--ai); }
-    .segment-detail-item.mixed { border-left-color: var(--mixed); }
-
-    .segment-detail-label {
-      font-family: var(--font-mono);
-      font-size: 9px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      margin-bottom: 8px;
-    }
-
-    .segment-detail-label.human { color: var(--human); }
-    .segment-detail-label.ai { color: var(--ai); }
-    .segment-detail-label.mixed { color: var(--mixed); }
-
-    .segment-detail-text {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    /* Dashboard Link */
-    .dashboard-link {
-      margin-top: 28px;
-      padding-top: 28px;
-      border-top: 1px solid var(--border);
-    }
-
-    .dashboard-link a {
-      color: var(--accent);
-      text-decoration: none;
-      font-size: 12px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      transition: all 0.2s;
-    }
-
-    .dashboard-link a:hover {
-      color: var(--accent-hover);
-    }
-
-    /* Responsive Styles */
-    @media (max-width: 1200px) {
-      .sidebar-toggle {
-        display: flex;
-      }
-
-      .history-sidebar {
-        position: fixed;
-        left: -300px;
-        top: 0;
-        z-index: 999;
-        transition: left 0.3s ease;
-      }
-
-      .history-sidebar.open {
-        left: 0;
-      }
-
-      .sidebar-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 998;
-        backdrop-filter: blur(4px);
-      }
-
-      .sidebar-overlay.visible {
-        display: block;
-      }
-
-      .input-mode {
-        padding-top: 100px;
-      }
-
-      .document-view {
-        padding-top: 100px;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .results-mode {
-        flex-direction: column;
-      }
-
-      .results-panel {
-        width: 100%;
-        height: auto;
-        position: static;
-        border-left: none;
-        border-top: 1px solid var(--border);
-      }
-
-      .document-view {
-        padding: 100px 20px 32px;
-      }
-
-      .input-mode {
-        padding: 100px 20px 32px;
-      }
-
-      .card {
-        padding: 24px;
-      }
-
-      .logo {
-        font-size: 40px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
-  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-    </svg>
-    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="5"/>
-      <line x1="12" y1="1" x2="12" y2="3"/>
-      <line x1="12" y1="21" x2="12" y2="23"/>
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-      <line x1="1" y1="12" x2="3" y2="12"/>
-      <line x1="21" y1="12" x2="23" y2="12"/>
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-    </svg>
-  </button>
-  <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-  <div class="app-layout">
-    <!-- History Sidebar -->
-    <aside class="history-sidebar" id="history-sidebar">
-      <div class="sidebar-header">
-        <h2>History</h2>
-        <button id="clear-history">Clear All</button>
-      </div>
-      <div class="history-list" id="history-list">
-        <div class="history-empty">No analysis history yet</div>
-      </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Input Mode -->
-      <div class="input-mode" id="input-mode">
-        <header>
-          <div class="logo">Pangram</div>
-          <p class="tagline">AI-Generated Text Detection</p>
-        </header>
-
-        <div class="card input-section">
-          <label for="text-input">Paste your text to analyze</label>
-          <textarea
-            id="text-input"
-            placeholder="Enter or paste the text you want to verify for AI-generated content..."
-          ></textarea>
-          <div class="char-count"><span id="char-count">0</span> characters</div>
-          <div class="button-row">
-            <button class="btn-primary" id="verify-btn"><span>Verify Text</span></button>
-            <button class="btn-secondary" id="clear-btn">Clear</button>
-          </div>
-          <div class="error-message" id="error-message"></div>
-          <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <span>Analyzing text...</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Results Mode -->
-      <div class="results-mode" id="results-mode">
-        <!-- Document View -->
-        <div class="document-view">
-          <button class="back-to-input" id="back-to-input">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Pangram - AI Text Detector</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg-primary: #050505;
+                --bg-secondary: #0c0c0c;
+                --bg-tertiary: #141414;
+                --bg-elevated: #1a1a1a;
+                --border: #2a2a2a;
+                --border-subtle: #1f1f1f;
+                --text-primary: #f5f5f5;
+                --text-secondary: #999;
+                --text-muted: #666;
+                --orange-50: #fff7ed;
+                --orange-100: #ffedd5;
+                --orange-200: #fed7aa;
+                --orange-300: #fdba74;
+                --orange-400: #fb923c;
+                --orange-500: #f97316;
+                --orange-600: #ea580c;
+                --orange-700: #c2410c;
+                --accent: #f97316;
+                --accent-hover: #fb923c;
+                --accent-glow: rgba(249, 115, 22, 0.4);
+                --accent-subtle: rgba(249, 115, 22, 0.1);
+                --human: #22c55e;
+                --human-bg: rgba(34, 197, 94, 0.12);
+                --human-border: rgba(34, 197, 94, 0.3);
+                --ai: #ef4444;
+                --ai-bg: rgba(239, 68, 68, 0.12);
+                --ai-border: rgba(239, 68, 68, 0.3);
+                --mixed: #f59e0b;
+                --mixed-bg: rgba(245, 158, 11, 0.12);
+                --mixed-border: rgba(245, 158, 11, 0.3);
+                --radius: 8px;
+                --radius-sm: 4px;
+                --font-display: "Syne", sans-serif;
+                --font-mono: "DM Mono", monospace;
+                --noise-opacity: 0.03;
+                --grid-opacity: 0.3;
+                --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+                --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+                --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+            }
+
+            [data-theme="light"] {
+                --bg-primary: #f8f7f4;
+                --bg-secondary: #ffffff;
+                --bg-tertiary: #f0efec;
+                --bg-elevated: #e8e7e4;
+                --border: #d4d3d0;
+                --border-subtle: #e0dfdc;
+                --text-primary: #0a0a09;
+                --text-secondary: #3d3c3a;
+                --text-muted: #5c5b58;
+                --accent: #ea580c;
+                --accent-hover: #c2410c;
+                --accent-glow: rgba(234, 88, 12, 0.2);
+                --accent-subtle: rgba(234, 88, 12, 0.08);
+                --human: #16a34a;
+                --human-bg: rgba(22, 163, 74, 0.1);
+                --human-border: rgba(22, 163, 74, 0.25);
+                --ai: #dc2626;
+                --ai-bg: rgba(220, 38, 38, 0.1);
+                --ai-border: rgba(220, 38, 38, 0.25);
+                --mixed: #d97706;
+                --mixed-bg: rgba(217, 119, 6, 0.1);
+                --mixed-border: rgba(217, 119, 6, 0.25);
+                --noise-opacity: 0.02;
+                --grid-opacity: 0.15;
+                --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+                --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+                --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: var(--font-mono);
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                min-height: 100vh;
+                line-height: 1.8;
+                position: relative;
+            }
+
+            /* Noise texture overlay */
+            body::before {
+                content: "";
+                position: fixed;
+                inset: 0;
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+                opacity: var(--noise-opacity);
+                pointer-events: none;
+                z-index: 9999;
+            }
+
+            /* Theme Toggle */
+            .theme-toggle {
+                position: fixed;
+                bottom: 16px;
+                right: 16px;
+                z-index: 1000;
+                width: 44px;
+                height: 44px;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                box-shadow: var(--shadow-sm);
+            }
+
+            .theme-toggle:hover {
+                background: var(--bg-tertiary);
+                border-color: var(--accent);
+                transform: scale(1.05);
+            }
+
+            .theme-toggle svg {
+                width: 20px;
+                height: 20px;
+                color: var(--accent);
+                transition: transform 0.4s ease;
+            }
+
+            .theme-toggle:hover svg {
+                transform: rotate(15deg);
+            }
+
+            .theme-toggle .icon-sun,
+            .theme-toggle .icon-moon {
+                position: absolute;
+                transition:
+                    opacity 0.3s ease,
+                    transform 0.3s ease;
+            }
+
+            .theme-toggle .icon-sun {
+                opacity: 0;
+                transform: scale(0.8) rotate(-90deg);
+            }
+
+            .theme-toggle .icon-moon {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+
+            [data-theme="light"] .theme-toggle .icon-sun {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+
+            [data-theme="light"] .theme-toggle .icon-moon {
+                opacity: 0;
+                transform: scale(0.8) rotate(90deg);
+            }
+
+            /* Sidebar Toggle Button */
+            .sidebar-toggle {
+                display: none;
+                position: fixed;
+                top: 16px;
+                left: 16px;
+                z-index: 1000;
+                width: 44px;
+                height: 44px;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                color: var(--accent);
+                font-size: 20px;
+                cursor: pointer;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+            }
+
+            .sidebar-toggle:hover {
+                background: var(--bg-tertiary);
+                border-color: var(--accent);
+                box-shadow: 0 0 20px var(--accent-glow);
+            }
+
+            /* App Layout */
+            .app-layout {
+                display: flex;
+                min-height: 100vh;
+            }
+
+            /* History Sidebar */
+            .history-sidebar {
+                width: 300px;
+                flex-shrink: 0;
+                background: var(--bg-secondary);
+                border-right: 1px solid var(--border);
+                position: sticky;
+                top: 0;
+                height: 100vh;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .sidebar-header {
+                padding: 24px 20px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: linear-gradient(
+                    180deg,
+                    var(--bg-tertiary) 0%,
+                    var(--bg-secondary) 100%
+                );
+            }
+
+            .sidebar-header h2 {
+                font-family: var(--font-display);
+                font-size: 14px;
+                font-weight: 700;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--text-secondary);
+            }
+
+            .sidebar-header button {
+                padding: 6px 12px;
+                font-family: var(--font-mono);
+                font-size: 11px;
+                background: transparent;
+                border: 1px solid var(--border);
+                color: var(--text-muted);
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                transition: all 0.2s;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .sidebar-header button:hover {
+                background: var(--ai-bg);
+                border-color: var(--ai);
+                color: var(--ai);
+            }
+
+            .history-list {
+                flex: 1;
+                overflow-y: auto;
+                padding: 16px;
+            }
+
+            .history-empty {
+                padding: 48px 20px;
+                text-align: center;
+                color: var(--text-muted);
+                font-size: 13px;
+                font-style: italic;
+            }
+
+            .history-item {
+                padding: 16px;
+                border-radius: var(--radius);
+                cursor: pointer;
+                margin-bottom: 8px;
+                background: var(--bg-tertiary);
+                border: 1px solid var(--border-subtle);
+                position: relative;
+                transition: all 0.2s;
+            }
+
+            .history-item::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 3px;
+                background: transparent;
+                border-radius: var(--radius) 0 0 var(--radius);
+                transition: background 0.2s;
+            }
+
+            .history-item:hover {
+                border-color: var(--border);
+                transform: translateX(4px);
+            }
+
+            .history-item:hover::before {
+                background: var(--accent);
+            }
+
+            .history-item.active {
+                border-color: var(--accent);
+                background: var(--accent-subtle);
+            }
+
+            .history-item.active::before {
+                background: var(--accent);
+            }
+
+            .history-item-preview {
+                font-size: 12px;
+                color: var(--text-secondary);
+                margin-bottom: 12px;
+                line-height: 1.5;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+            .history-item-meta {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+            }
+
+            .history-item-badge {
+                font-family: var(--font-mono);
+                font-size: 9px;
+                font-weight: 500;
+                padding: 4px 8px;
+                border-radius: 2px;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                border: 1px solid;
+            }
+
+            .history-item-badge.human {
+                background: var(--human-bg);
+                color: var(--human);
+                border-color: var(--human-border);
+            }
+
+            .history-item-badge.ai {
+                background: var(--ai-bg);
+                color: var(--ai);
+                border-color: var(--ai-border);
+            }
+
+            .history-item-badge.mixed {
+                background: var(--mixed-bg);
+                color: var(--mixed);
+                border-color: var(--mixed-border);
+            }
+
+            .history-item-time {
+                font-size: 10px;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .history-item-delete {
+                position: absolute;
+                top: 6px;
+                right: 6px;
+                width: 18px;
+                height: 18px;
+                border-radius: 2px;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                color: var(--text-muted);
+                cursor: pointer;
+                opacity: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                line-height: 1;
+                transition: all 0.2s;
+            }
+
+            .history-item:hover .history-item-delete {
+                opacity: 1;
+            }
+
+            .history-item-delete:hover {
+                background: var(--ai-bg);
+                border-color: var(--ai);
+                color: var(--ai);
+            }
+
+            /* Main Content */
+            .main-content {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+            }
+
+            /* Decorative grid pattern */
+            .main-content::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background-image:
+                    linear-gradient(var(--border-subtle) 1px, transparent 1px),
+                    linear-gradient(
+                        90deg,
+                        var(--border-subtle) 1px,
+                        transparent 1px
+                    );
+                background-size: 60px 60px;
+                opacity: var(--grid-opacity);
+                pointer-events: none;
+            }
+
+            /* Input Mode */
+            .input-mode {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 60px 32px;
+                min-height: 100vh;
+                position: relative;
+                z-index: 1;
+            }
+
+            .input-mode.hidden {
+                display: none;
+            }
+
+            .input-mode header {
+                text-align: center;
+                margin-bottom: 48px;
+            }
+
+            .logo {
+                font-family: var(--font-display);
+                font-size: 56px;
+                font-weight: 800;
+                letter-spacing: -0.02em;
+                background: linear-gradient(
+                    135deg,
+                    var(--accent-hover) 0%,
+                    var(--accent) 50%,
+                    var(--accent-hover) 100%
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                text-shadow: 0 0 80px var(--accent-glow);
+                position: relative;
+            }
+
+            .logo::after {
+                content: "Pangram";
+                position: absolute;
+                left: 0;
+                top: 0;
+                background: linear-gradient(
+                    135deg,
+                    var(--accent-hover) 0%,
+                    var(--accent) 50%,
+                    var(--accent-hover) 100%
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                filter: blur(30px);
+                opacity: 0.5;
+            }
+
+            .tagline {
+                font-family: var(--font-mono);
+                color: var(--text-muted);
+                margin-top: 12px;
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 0.2em;
+            }
+
+            .card {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-md);
+                padding: 32px;
+                width: 100%;
+                max-width: 720px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--accent),
+                    transparent
+                );
+            }
+
+            .input-section label {
+                display: block;
+                font-family: var(--font-display);
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text-muted);
+                margin-bottom: 16px;
+                text-transform: uppercase;
+                letter-spacing: 0.15em;
+            }
+
+            textarea {
+                width: 100%;
+                min-height: 220px;
+                padding: 20px;
+                background: var(--bg-primary);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                color: var(--text-primary);
+                font-family: var(--font-mono);
+                font-size: 16px;
+                line-height: 1.9;
+                resize: vertical;
+                transition: all 0.2s;
+            }
+
+            textarea:focus {
+                outline: none;
+                border-color: var(--accent);
+                box-shadow:
+                    0 0 0 3px var(--accent-subtle),
+                    0 0 30px var(--accent-glow);
+            }
+
+            textarea::placeholder {
+                color: var(--text-muted);
+            }
+
+            .char-count {
+                text-align: right;
+                font-size: 11px;
+                color: var(--text-muted);
+                margin-top: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+
+            .button-row {
+                margin-top: 24px;
+                display: flex;
+                gap: 12px;
+            }
+
+            button {
+                font-family: var(--font-display);
+                padding: 14px 32px;
+                font-size: 13px;
+                font-weight: 700;
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                transition: all 0.2s;
+                border: none;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+
+            .btn-primary {
+                background: linear-gradient(
+                    135deg,
+                    var(--orange-500) 0%,
+                    var(--orange-600) 100%
+                );
+                color: var(--bg-primary);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .btn-primary::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(
+                    135deg,
+                    var(--orange-400) 0%,
+                    var(--orange-500) 100%
+                );
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+
+            .btn-primary:hover:not(:disabled)::before {
+                opacity: 1;
+            }
+
+            .btn-primary:hover:not(:disabled) {
+                box-shadow:
+                    0 0 30px var(--accent-glow),
+                    0 4px 20px rgba(0, 0, 0, 0.4);
+                transform: translateY(-2px);
+            }
+
+            .btn-primary span {
+                position: relative;
+                z-index: 1;
+            }
+
+            .btn-primary:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+
+            .btn-secondary {
+                background: var(--bg-tertiary);
+                color: var(--text-secondary);
+                border: 1px solid var(--border);
+            }
+
+            .btn-secondary:hover {
+                background: var(--bg-elevated);
+                color: var(--text-primary);
+                border-color: var(--text-muted);
+            }
+
+            .error-message {
+                background: var(--ai-bg);
+                border: 1px solid var(--ai-border);
+                border-radius: var(--radius-sm);
+                padding: 16px 20px;
+                color: var(--ai);
+                margin-top: 20px;
+                display: none;
+                font-size: 13px;
+            }
+
+            .error-message.visible {
+                display: block;
+            }
+
+            .loading {
+                display: none;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                padding: 48px;
+                color: var(--text-secondary);
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+
+            .loading.visible {
+                display: flex;
+            }
+
+            .spinner {
+                width: 24px;
+                height: 24px;
+                border: 2px solid var(--border);
+                border-top-color: var(--accent);
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* Results Mode */
+            .results-mode {
+                display: none;
+                flex: 1;
+            }
+
+            .results-mode.visible {
+                display: flex;
+            }
+
+            /* Document View */
+            .document-view {
+                flex: 1;
+                padding: 40px;
+                overflow-y: auto;
+                min-width: 0;
+                position: relative;
+                z-index: 1;
+            }
+
+            .doc-header {
+                margin-bottom: 32px;
+            }
+
+            .doc-title {
+                font-family: var(--font-display);
+                font-size: 28px;
+                font-weight: 700;
+                margin-bottom: 16px;
+                letter-spacing: -0.02em;
+            }
+
+            .doc-meta {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                color: var(--text-muted);
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+
+            .doc-prediction-pill {
+                font-family: var(--font-mono);
+                font-size: 10px;
+                font-weight: 500;
+                padding: 6px 12px;
+                border-radius: 2px;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                border: 1px solid;
+            }
+
+            .doc-prediction-pill.human {
+                background: var(--human-bg);
+                color: var(--human);
+                border-color: var(--human-border);
+            }
+
+            .doc-prediction-pill.ai {
+                background: var(--ai-bg);
+                color: var(--ai);
+                border-color: var(--ai-border);
+            }
+
+            .doc-prediction-pill.mixed {
+                background: var(--mixed-bg);
+                color: var(--mixed);
+                border-color: var(--mixed-border);
+            }
+
+            .back-to-input {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                color: var(--accent);
+                font-family: var(--font-mono);
+                font-size: 12px;
+                cursor: pointer;
+                margin-bottom: 32px;
+                background: none;
+                border: none;
+                padding: 8px 0;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                transition: all 0.2s;
+            }
+
+            .back-to-input:hover {
+                color: var(--accent-hover);
+                transform: translateX(-4px);
+            }
+
+            .segments-text {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 28px;
+                line-height: 2.2;
+                font-size: 16px;
+                white-space: pre-wrap;
+            }
+
+            .segment {
+                padding: 2px 4px;
+                margin: 0 -2px;
+                border-radius: 2px;
+            }
+
+            .segment.ai {
+                background: var(--ai-bg);
+            }
+
+            .segment {
+                cursor: pointer;
+            }
+
+            .segment.highlighted {
+                border-bottom: 2px solid;
+            }
+
+            .segment.highlighted.human {
+                border-bottom-color: var(--human);
+            }
+
+            .segment.highlighted.ai {
+                border-bottom-color: var(--ai);
+            }
+
+            .segment.highlighted.mixed {
+                border-bottom-color: var(--mixed);
+            }
+
+            .legend {
+                display: flex;
+                gap: 32px;
+                margin-top: 20px;
+                flex-wrap: wrap;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 11px;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+
+            .legend-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 2px;
+            }
+
+            .legend-dot.human {
+                background: var(--human);
+            }
+            .legend-dot.ai {
+                background: var(--ai);
+            }
+            .legend-dot.mixed {
+                background: var(--mixed);
+            }
+
+            /* Results Panel */
+            .results-panel {
+                width: 420px;
+                flex-shrink: 0;
+                background: var(--bg-secondary);
+                border-left: 1px solid var(--border);
+                position: sticky;
+                top: 0;
+                height: 100vh;
+                overflow-y: auto;
+            }
+
+            .panel-tabs {
+                display: flex;
+                border-bottom: 1px solid var(--border);
+                background: var(--bg-tertiary);
+            }
+
+            .panel-tab {
+                flex: 1;
+                padding: 18px;
+                text-align: center;
+                font-family: var(--font-display);
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--text-muted);
+                cursor: pointer;
+                background: none;
+                border: none;
+                border-bottom: 2px solid transparent;
+                margin-bottom: -1px;
+                text-transform: uppercase;
+                letter-spacing: 0.15em;
+                transition: all 0.2s;
+            }
+
+            .panel-tab:hover {
+                color: var(--text-secondary);
+            }
+
+            .panel-tab.active {
+                color: var(--accent);
+                border-bottom-color: var(--accent);
+            }
+
+            .panel-content {
+                padding: 20px;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            /* Prediction Card */
+            .prediction-card {
+                text-align: center;
+                padding: 20px 16px;
+                background: var(--bg-tertiary);
+                border-radius: var(--radius);
+                margin-bottom: 16px;
+                border: 1px solid var(--border);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .prediction-card::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                opacity: 0.05;
+                pointer-events: none;
+            }
+
+            .prediction-card.human::before {
+                background: radial-gradient(
+                    circle at center,
+                    var(--human),
+                    transparent 70%
+                );
+            }
+
+            .prediction-card.ai::before {
+                background: radial-gradient(
+                    circle at center,
+                    var(--ai),
+                    transparent 70%
+                );
+            }
+
+            .prediction-card.mixed::before {
+                background: radial-gradient(
+                    circle at center,
+                    var(--mixed),
+                    transparent 70%
+                );
+            }
+
+            .prediction-icon {
+                font-size: 40px;
+                margin-bottom: 10px;
+                position: relative;
+            }
+
+            .prediction-card.human .prediction-icon {
+                color: var(--human);
+            }
+            .prediction-card.ai .prediction-icon {
+                color: var(--ai);
+            }
+            .prediction-card.mixed .prediction-icon {
+                color: var(--mixed);
+            }
+
+            .prediction-text {
+                font-family: var(--font-display);
+                font-size: 16px;
+                font-weight: 700;
+                margin-bottom: 8px;
+                letter-spacing: -0.01em;
+            }
+
+            .prediction-subtext {
+                font-size: 12px;
+                color: var(--text-muted);
+                line-height: 1.5;
+            }
+
+            /* Score Breakdown */
+            .score-breakdown {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .score-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .score-row-label {
+                width: 100px;
+                font-size: 11px;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .score-row-bar {
+                flex: 1;
+                height: 6px;
+                background: var(--border);
+                border-radius: 3px;
+                overflow: hidden;
+            }
+
+            .score-row-fill {
+                height: 100%;
+                border-radius: 3px;
+                transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .score-row-fill.human {
+                background: var(--human);
+            }
+            .score-row-fill.ai {
+                background: var(--ai);
+            }
+            .score-row-fill.mixed {
+                background: var(--mixed);
+            }
+
+            .score-row-value {
+                width: 52px;
+                text-align: right;
+                font-family: var(--font-display);
+                font-size: 14px;
+                font-weight: 700;
+            }
+
+            .score-row-value.human {
+                color: var(--human);
+            }
+            .score-row-value.ai {
+                color: var(--ai);
+            }
+            .score-row-value.mixed {
+                color: var(--mixed);
+            }
+
+            /* Segment Details */
+            .segment-details {
+                margin-top: 24px;
+            }
+
+            .segment-details summary {
+                cursor: pointer;
+                font-size: 12px;
+                color: var(--text-muted);
+                padding: 14px 16px;
+                background: var(--bg-tertiary);
+                border-radius: var(--radius-sm);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+
+            .segment-details summary:hover {
+                color: var(--text-secondary);
+            }
+
+            .segment-detail-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .segment-detail-item {
+                padding: 16px;
+                background: var(--bg-tertiary);
+                border-radius: var(--radius-sm);
+                border-left: 3px solid;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .segment-detail-item:hover {
+                background: var(--bg-elevated);
+                transform: translateX(4px);
+            }
+
+            .segment-detail-item.human {
+                border-left-color: var(--human);
+            }
+            .segment-detail-item.ai {
+                border-left-color: var(--ai);
+            }
+            .segment-detail-item.mixed {
+                border-left-color: var(--mixed);
+            }
+
+            .segment-detail-label {
+                font-family: var(--font-mono);
+                font-size: 9px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.15em;
+                margin-bottom: 8px;
+            }
+
+            .segment-detail-label.human {
+                color: var(--human);
+            }
+            .segment-detail-label.ai {
+                color: var(--ai);
+            }
+            .segment-detail-label.mixed {
+                color: var(--mixed);
+            }
+
+            .segment-detail-text {
+                font-size: 12px;
+                color: var(--text-secondary);
+                line-height: 1.6;
+            }
+
+            /* Dashboard Link */
+            .dashboard-link {
+                margin-top: 16px;
+                padding-top: 16px;
+                border-top: 1px solid var(--border);
+            }
+
+            .dashboard-link a {
+                color: var(--accent);
+                text-decoration: none;
+                font-size: 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                transition: all 0.2s;
+            }
+
+            .dashboard-link a:hover {
+                color: var(--accent-hover);
+            }
+
+            /* Responsive Styles */
+            @media (max-width: 1200px) {
+                .sidebar-toggle {
+                    display: flex;
+                }
+
+                .history-sidebar {
+                    position: fixed;
+                    left: -300px;
+                    top: 0;
+                    z-index: 999;
+                    transition: left 0.3s ease;
+                }
+
+                .history-sidebar.open {
+                    left: 0;
+                }
+
+                .sidebar-overlay {
+                    display: none;
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.7);
+                    z-index: 998;
+                    backdrop-filter: blur(4px);
+                }
+
+                .sidebar-overlay.visible {
+                    display: block;
+                }
+
+                .input-mode {
+                    padding-top: 100px;
+                }
+
+                .document-view {
+                    padding-top: 100px;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .results-mode {
+                    flex-direction: column;
+                }
+
+                .results-panel {
+                    width: 100%;
+                    height: auto;
+                    position: static;
+                    border-left: none;
+                    border-top: 1px solid var(--border);
+                }
+
+                .document-view {
+                    padding: 100px 20px 32px;
+                }
+
+                .input-mode {
+                    padding: 100px 20px 32px;
+                }
+
+                .card {
+                    padding: 24px;
+                }
+
+                .logo {
+                    font-size: 40px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+        <button
+            class="theme-toggle"
+            id="theme-toggle"
+            aria-label="Toggle theme"
+        >
+            <svg
+                class="icon-moon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
             </svg>
-            New Analysis
-          </button>
+            <svg
+                class="icon-sun"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+        </button>
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-          <div class="doc-header">
-            <h1 class="doc-title" id="doc-title">Analysis Results</h1>
-            <div class="doc-meta">
-              <span id="doc-date"></span>
-              <span class="doc-prediction-pill" id="doc-prediction-pill"></span>
-            </div>
-          </div>
+        <div class="app-layout">
+            <!-- History Sidebar -->
+            <aside class="history-sidebar" id="history-sidebar">
+                <div class="sidebar-header">
+                    <h2>History</h2>
+                    <button id="clear-history">Clear All</button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <div class="history-empty">No analysis history yet</div>
+                </div>
+            </aside>
 
-          <div class="segments-text" id="segments-text"></div>
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Input Mode -->
+                <div class="input-mode" id="input-mode">
+                    <header>
+                        <div class="logo">Pangram</div>
+                        <p class="tagline">AI-Generated Text Detection</p>
+                    </header>
 
-          <div class="legend">
-            <div class="legend-item">
-              <div class="legend-dot human"></div>
-              <span>Human-written</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-dot ai"></div>
-              <span>AI-generated</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-dot mixed"></div>
-              <span>AI-assisted</span>
-            </div>
-          </div>
+                    <div class="card input-section">
+                        <label for="text-input"
+                            >Paste your text to analyze</label
+                        >
+                        <textarea
+                            id="text-input"
+                            placeholder="Enter or paste the text you want to verify for AI-generated content..."
+                        ></textarea>
+                        <div class="char-count">
+                            <span id="char-count">0</span> characters
+                        </div>
+                        <div class="button-row">
+                            <button class="btn-primary" id="verify-btn">
+                                <span>Verify Text</span>
+                            </button>
+                            <button class="btn-secondary" id="clear-btn">
+                                Clear
+                            </button>
+                        </div>
+                        <div class="error-message" id="error-message"></div>
+                        <div class="loading" id="loading">
+                            <div class="spinner"></div>
+                            <span>Analyzing text...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Mode -->
+                <div class="results-mode" id="results-mode">
+                    <!-- Document View -->
+                    <div class="document-view">
+                        <button class="back-to-input" id="back-to-input">
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M19 12H5M12 19l-7-7 7-7" />
+                            </svg>
+                            New Analysis
+                        </button>
+
+                        <div class="doc-header">
+                            <h1 class="doc-title" id="doc-title">
+                                Analysis Results
+                            </h1>
+                            <div class="doc-meta">
+                                <span id="doc-date"></span>
+                                <span
+                                    class="doc-prediction-pill"
+                                    id="doc-prediction-pill"
+                                ></span>
+                            </div>
+                        </div>
+
+                        <div class="segments-text" id="segments-text"></div>
+
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div class="legend-dot human"></div>
+                                <span>Human-written</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot ai"></div>
+                                <span>AI-generated</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot mixed"></div>
+                                <span>AI-assisted</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <aside class="results-panel">
+                        <div class="panel-tabs">
+                            <button
+                                class="panel-tab active"
+                                data-tab="overview"
+                            >
+                                Overview
+                            </button>
+                            <button class="panel-tab" data-tab="details">
+                                Details
+                            </button>
+                        </div>
+
+                        <div class="panel-content">
+                            <!-- Overview Tab -->
+                            <div class="tab-content active" id="tab-overview">
+                                <div
+                                    class="prediction-card"
+                                    id="prediction-card"
+                                >
+                                    <div
+                                        class="prediction-icon"
+                                        id="prediction-icon"
+                                    ></div>
+                                    <div
+                                        class="prediction-text"
+                                        id="prediction-text"
+                                    ></div>
+                                    <div
+                                        class="prediction-subtext"
+                                        id="prediction-subtext"
+                                    ></div>
+                                </div>
+
+                                <div
+                                    class="score-breakdown"
+                                    id="score-breakdown"
+                                ></div>
+
+                                <div
+                                    class="dashboard-link"
+                                    id="dashboard-link"
+                                    style="display: none"
+                                >
+                                    <a
+                                        href="#"
+                                        target="_blank"
+                                        id="dashboard-anchor"
+                                    >
+                                        View detailed report
+                                        <svg
+                                            width="14"
+                                            height="14"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path
+                                                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                                            />
+                                            <polyline points="15 3 21 3 21 9" />
+                                            <line
+                                                x1="10"
+                                                y1="14"
+                                                x2="21"
+                                                y2="3"
+                                            />
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Details Tab -->
+                            <div class="tab-content" id="tab-details">
+                                <div
+                                    class="segment-detail-list"
+                                    id="segment-detail-list"
+                                ></div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </main>
         </div>
 
-        <!-- Results Panel -->
-        <aside class="results-panel">
-          <div class="panel-tabs">
-            <button class="panel-tab active" data-tab="overview">Overview</button>
-            <button class="panel-tab" data-tab="details">Details</button>
-          </div>
+        <script>
+            // History Manager
+            const HistoryManager = {
+                STORAGE_KEY: "pangram_history",
+                MAX_ENTRIES: 50,
 
-          <div class="panel-content">
-            <!-- Overview Tab -->
-            <div class="tab-content active" id="tab-overview">
-              <div class="prediction-card" id="prediction-card">
-                <div class="prediction-icon" id="prediction-icon"></div>
-                <div class="prediction-text" id="prediction-text"></div>
-                <div class="prediction-subtext" id="prediction-subtext"></div>
-              </div>
+                getAll() {
+                    try {
+                        return JSON.parse(
+                            localStorage.getItem(this.STORAGE_KEY) || "[]",
+                        );
+                    } catch {
+                        return [];
+                    }
+                },
 
-              <div class="progress-section">
-                <div class="progress-arc-wrapper">
-                  <svg class="circular-progress" viewBox="0 0 220 130">
-                    <path class="circular-progress-bg" d="M 18 115 A 92 92 0 0 1 202 115" />
-                    <path class="circular-progress-fill" id="progress-fill" d="M 18 115 A 92 92 0 0 1 202 115" />
-                  </svg>
-                </div>
-                <div class="progress-text">
-                  <div class="progress-value" id="progress-value">0<span class="percent">%</span></div>
-                  <div class="progress-label" id="progress-label">Human Written</div>
-                </div>
-              </div>
+                add(text, apiResponse) {
+                    const entries = this.getAll();
+                    const entry = {
+                        id: crypto.randomUUID(),
+                        text,
+                        preview:
+                            text.substring(0, 80) +
+                            (text.length > 80 ? "..." : ""),
+                        timestamp: Date.now(),
+                        prediction:
+                            apiResponse.headline || apiResponse.prediction,
+                        predictionClass: getPredictionClass(
+                            apiResponse.headline || apiResponse.prediction,
+                        ),
+                        apiResponse,
+                    };
+                    entries.unshift(entry);
+                    if (entries.length > this.MAX_ENTRIES) entries.pop();
+                    localStorage.setItem(
+                        this.STORAGE_KEY,
+                        JSON.stringify(entries),
+                    );
+                    return entry;
+                },
 
-              <div class="score-breakdown" id="score-breakdown"></div>
+                get(id) {
+                    return this.getAll().find((e) => e.id === id);
+                },
 
-              <div class="dashboard-link" id="dashboard-link" style="display: none;">
-                <a href="#" target="_blank" id="dashboard-anchor">
-                  View detailed report
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                    <polyline points="15 3 21 3 21 9"/>
-                    <line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                </a>
-              </div>
-            </div>
+                delete(id) {
+                    const entries = this.getAll().filter((e) => e.id !== id);
+                    localStorage.setItem(
+                        this.STORAGE_KEY,
+                        JSON.stringify(entries),
+                    );
+                    return entries;
+                },
 
-            <!-- Details Tab -->
-            <div class="tab-content" id="tab-details">
-              <div class="segment-detail-list" id="segment-detail-list"></div>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </main>
-  </div>
+                clearAll() {
+                    localStorage.removeItem(this.STORAGE_KEY);
+                },
+            };
 
-  <script>
-    // History Manager
-    const HistoryManager = {
-      STORAGE_KEY: 'pangram_history',
-      MAX_ENTRIES: 50,
+            // Theme Manager
+            const ThemeManager = {
+                STORAGE_KEY: "pangram_theme",
 
-      getAll() {
-        try {
-          return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
-        } catch {
-          return [];
-        }
-      },
+                init() {
+                    const savedTheme = localStorage.getItem(this.STORAGE_KEY);
+                    const prefersDark = window.matchMedia(
+                        "(prefers-color-scheme: dark)",
+                    ).matches;
+                    const theme =
+                        savedTheme || (prefersDark ? "dark" : "light");
+                    this.set(theme);
+                },
 
-      add(text, apiResponse) {
-        const entries = this.getAll();
-        const entry = {
-          id: crypto.randomUUID(),
-          text,
-          preview: text.substring(0, 80) + (text.length > 80 ? '...' : ''),
-          timestamp: Date.now(),
-          prediction: apiResponse.headline || apiResponse.prediction,
-          predictionClass: getPredictionClass(apiResponse.headline || apiResponse.prediction),
-          apiResponse
-        };
-        entries.unshift(entry);
-        if (entries.length > this.MAX_ENTRIES) entries.pop();
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(entries));
-        return entry;
-      },
+                get() {
+                    return (
+                        document.documentElement.getAttribute("data-theme") ||
+                        "dark"
+                    );
+                },
 
-      get(id) {
-        return this.getAll().find(e => e.id === id);
-      },
+                set(theme) {
+                    document.documentElement.setAttribute("data-theme", theme);
+                    localStorage.setItem(this.STORAGE_KEY, theme);
+                },
 
-      delete(id) {
-        const entries = this.getAll().filter(e => e.id !== id);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(entries));
-        return entries;
-      },
+                toggle() {
+                    const current = this.get();
+                    this.set(current === "dark" ? "light" : "dark");
+                },
+            };
 
-      clearAll() {
-        localStorage.removeItem(this.STORAGE_KEY);
-      }
-    };
+            // Initialize theme
+            ThemeManager.init();
 
-    // Theme Manager
-    const ThemeManager = {
-      STORAGE_KEY: 'pangram_theme',
+            // App State
+            const AppState = {
+                mode: "input",
+                currentEntryId: null,
+                sidebarOpen: false,
+                activeTab: "overview",
+            };
 
-      init() {
-        const savedTheme = localStorage.getItem(this.STORAGE_KEY);
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-        this.set(theme);
-      },
+            // DOM Elements
+            const textInput = document.getElementById("text-input");
+            const charCount = document.getElementById("char-count");
+            const verifyBtn = document.getElementById("verify-btn");
+            const clearBtn = document.getElementById("clear-btn");
+            const loading = document.getElementById("loading");
+            const errorMessage = document.getElementById("error-message");
+            const inputMode = document.getElementById("input-mode");
+            const resultsMode = document.getElementById("results-mode");
+            const historySidebar = document.getElementById("history-sidebar");
+            const historyList = document.getElementById("history-list");
+            const sidebarToggle = document.getElementById("sidebar-toggle");
+            const sidebarOverlay = document.getElementById("sidebar-overlay");
+            const backToInput = document.getElementById("back-to-input");
+            const clearHistoryBtn = document.getElementById("clear-history");
+            const panelTabs = document.querySelectorAll(".panel-tab");
+            const themeToggle = document.getElementById("theme-toggle");
 
-      get() {
-        return document.documentElement.getAttribute('data-theme') || 'dark';
-      },
+            // Initialize
+            renderHistoryList();
 
-      set(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem(this.STORAGE_KEY, theme);
-      },
+            // Event Listeners
+            textInput.addEventListener("input", () => {
+                charCount.textContent = textInput.value.length;
+            });
 
-      toggle() {
-        const current = this.get();
-        this.set(current === 'dark' ? 'light' : 'dark');
-      }
-    };
+            clearBtn.addEventListener("click", () => {
+                textInput.value = "";
+                charCount.textContent = "0";
+                errorMessage.classList.remove("visible");
+            });
 
-    // Initialize theme
-    ThemeManager.init();
+            verifyBtn.addEventListener("click", handleVerify);
 
-    // App State
-    const AppState = {
-      mode: 'input',
-      currentEntryId: null,
-      sidebarOpen: false,
-      activeTab: 'overview'
-    };
+            backToInput.addEventListener("click", () => {
+                switchToInputMode();
+            });
 
-    // DOM Elements
-    const textInput = document.getElementById('text-input');
-    const charCount = document.getElementById('char-count');
-    const verifyBtn = document.getElementById('verify-btn');
-    const clearBtn = document.getElementById('clear-btn');
-    const loading = document.getElementById('loading');
-    const errorMessage = document.getElementById('error-message');
-    const inputMode = document.getElementById('input-mode');
-    const resultsMode = document.getElementById('results-mode');
-    const historySidebar = document.getElementById('history-sidebar');
-    const historyList = document.getElementById('history-list');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    const backToInput = document.getElementById('back-to-input');
-    const clearHistoryBtn = document.getElementById('clear-history');
-    const panelTabs = document.querySelectorAll('.panel-tab');
-    const themeToggle = document.getElementById('theme-toggle');
+            sidebarToggle.addEventListener("click", () => {
+                toggleSidebar();
+            });
 
-    // Initialize
-    renderHistoryList();
+            sidebarOverlay.addEventListener("click", () => {
+                toggleSidebar(false);
+            });
 
-    // Event Listeners
-    textInput.addEventListener('input', () => {
-      charCount.textContent = textInput.value.length;
-    });
+            themeToggle.addEventListener("click", () => {
+                ThemeManager.toggle();
+            });
 
-    clearBtn.addEventListener('click', () => {
-      textInput.value = '';
-      charCount.textContent = '0';
-      errorMessage.classList.remove('visible');
-    });
+            clearHistoryBtn.addEventListener("click", () => {
+                if (confirm("Clear all history?")) {
+                    HistoryManager.clearAll();
+                    renderHistoryList();
+                    if (AppState.mode === "results") {
+                        switchToInputMode();
+                    }
+                }
+            });
 
-    verifyBtn.addEventListener('click', handleVerify);
+            panelTabs.forEach((tab) => {
+                tab.addEventListener("click", () => {
+                    const tabId = tab.dataset.tab;
+                    switchTab(tabId);
+                });
+            });
 
-    backToInput.addEventListener('click', () => {
-      switchToInputMode();
-    });
+            // Functions
+            function toggleSidebar(open) {
+                AppState.sidebarOpen =
+                    open !== undefined ? open : !AppState.sidebarOpen;
+                historySidebar.classList.toggle("open", AppState.sidebarOpen);
+                sidebarOverlay.classList.toggle(
+                    "visible",
+                    AppState.sidebarOpen,
+                );
+            }
 
-    sidebarToggle.addEventListener('click', () => {
-      toggleSidebar();
-    });
+            function switchTab(tabId) {
+                AppState.activeTab = tabId;
+                panelTabs.forEach((t) =>
+                    t.classList.toggle("active", t.dataset.tab === tabId),
+                );
+                document.querySelectorAll(".tab-content").forEach((c) => {
+                    c.classList.toggle("active", c.id === `tab-${tabId}`);
+                });
+            }
 
-    sidebarOverlay.addEventListener('click', () => {
-      toggleSidebar(false);
-    });
+            function switchToInputMode() {
+                AppState.mode = "input";
+                AppState.currentEntryId = null;
+                inputMode.classList.remove("hidden");
+                resultsMode.classList.remove("visible");
+                updateActiveHistoryItem();
+            }
 
-    themeToggle.addEventListener('click', () => {
-      ThemeManager.toggle();
-    });
+            function switchToResultsMode() {
+                AppState.mode = "results";
+                inputMode.classList.add("hidden");
+                resultsMode.classList.add("visible");
+            }
 
-    clearHistoryBtn.addEventListener('click', () => {
-      if (confirm('Clear all history?')) {
-        HistoryManager.clearAll();
-        renderHistoryList();
-        if (AppState.mode === 'results') {
-          switchToInputMode();
-        }
-      }
-    });
+            function updateActiveHistoryItem() {
+                document.querySelectorAll(".history-item").forEach((item) => {
+                    item.classList.toggle(
+                        "active",
+                        item.dataset.id === AppState.currentEntryId,
+                    );
+                });
+            }
 
-    panelTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const tabId = tab.dataset.tab;
-        switchTab(tabId);
-      });
-    });
+            function renderHistoryList() {
+                const entries = HistoryManager.getAll();
 
-    // Functions
-    function toggleSidebar(open) {
-      AppState.sidebarOpen = open !== undefined ? open : !AppState.sidebarOpen;
-      historySidebar.classList.toggle('open', AppState.sidebarOpen);
-      sidebarOverlay.classList.toggle('visible', AppState.sidebarOpen);
-    }
+                if (entries.length === 0) {
+                    historyList.innerHTML =
+                        '<div class="history-empty">No analysis history yet</div>';
+                    return;
+                }
 
-    function switchTab(tabId) {
-      AppState.activeTab = tabId;
-      panelTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
-      document.querySelectorAll('.tab-content').forEach(c => {
-        c.classList.toggle('active', c.id === `tab-${tabId}`);
-      });
-    }
-
-    function switchToInputMode() {
-      AppState.mode = 'input';
-      AppState.currentEntryId = null;
-      inputMode.classList.remove('hidden');
-      resultsMode.classList.remove('visible');
-      updateActiveHistoryItem();
-    }
-
-    function switchToResultsMode() {
-      AppState.mode = 'results';
-      inputMode.classList.add('hidden');
-      resultsMode.classList.add('visible');
-    }
-
-    function updateActiveHistoryItem() {
-      document.querySelectorAll('.history-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.id === AppState.currentEntryId);
-      });
-    }
-
-    function renderHistoryList() {
-      const entries = HistoryManager.getAll();
-
-      if (entries.length === 0) {
-        historyList.innerHTML = '<div class="history-empty">No analysis history yet</div>';
-        return;
-      }
-
-      historyList.innerHTML = entries.map(entry => `
-        <div class="history-item ${entry.id === AppState.currentEntryId ? 'active' : ''}" data-id="${entry.id}">
+                historyList.innerHTML = entries
+                    .map(
+                        (entry) => `
+        <div class="history-item ${entry.id === AppState.currentEntryId ? "active" : ""}" data-id="${entry.id}">
           <button class="history-item-delete" data-id="${entry.id}">&times;</button>
           <div class="history-item-preview">${escapeHtml(entry.preview)}</div>
           <div class="history-item-meta">
@@ -1547,143 +1678,151 @@
             <span class="history-item-time">${formatRelativeTime(entry.timestamp)}</span>
           </div>
         </div>
-      `).join('');
+      `,
+                    )
+                    .join("");
 
-      // Add click handlers
-      historyList.querySelectorAll('.history-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-          if (e.target.classList.contains('history-item-delete')) return;
-          const id = item.dataset.id;
-          loadHistoryEntry(id);
-        });
-      });
+                // Add click handlers
+                historyList
+                    .querySelectorAll(".history-item")
+                    .forEach((item) => {
+                        item.addEventListener("click", (e) => {
+                            if (
+                                e.target.classList.contains(
+                                    "history-item-delete",
+                                )
+                            )
+                                return;
+                            const id = item.dataset.id;
+                            loadHistoryEntry(id);
+                        });
+                    });
 
-      historyList.querySelectorAll('.history-item-delete').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const id = btn.dataset.id;
-          HistoryManager.delete(id);
-          renderHistoryList();
-          if (AppState.currentEntryId === id) {
-            switchToInputMode();
-          }
-        });
-      });
-    }
+                historyList
+                    .querySelectorAll(".history-item-delete")
+                    .forEach((btn) => {
+                        btn.addEventListener("click", (e) => {
+                            e.stopPropagation();
+                            const id = btn.dataset.id;
+                            HistoryManager.delete(id);
+                            renderHistoryList();
+                            if (AppState.currentEntryId === id) {
+                                switchToInputMode();
+                            }
+                        });
+                    });
+            }
 
-    function loadHistoryEntry(id) {
-      const entry = HistoryManager.get(id);
-      if (!entry) return;
+            function loadHistoryEntry(id) {
+                const entry = HistoryManager.get(id);
+                if (!entry) return;
 
-      AppState.currentEntryId = id;
-      displayResults(entry.apiResponse, entry.text, entry.timestamp);
-      switchToResultsMode();
-      updateActiveHistoryItem();
-      toggleSidebar(false);
-    }
+                AppState.currentEntryId = id;
+                displayResults(entry.apiResponse, entry.text, entry.timestamp);
+                switchToResultsMode();
+                updateActiveHistoryItem();
+                toggleSidebar(false);
+            }
 
-    async function handleVerify() {
-      const text = textInput.value.trim();
+            async function handleVerify() {
+                const text = textInput.value.trim();
 
-      if (!text) {
-        showError('Please enter some text to analyze.');
-        return;
-      }
+                if (!text) {
+                    showError("Please enter some text to analyze.");
+                    return;
+                }
 
-      hideError();
-      loading.classList.add('visible');
-      verifyBtn.disabled = true;
+                hideError();
+                loading.classList.add("visible");
+                verifyBtn.disabled = true;
 
-      try {
-        const response = await fetch('/api/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
-        });
+                try {
+                    const response = await fetch("/api/verify", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ text }),
+                    });
 
-        const data = await response.json();
+                    const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to analyze text');
-        }
+                    if (!response.ok) {
+                        throw new Error(data.error || "Failed to analyze text");
+                    }
 
-        // Save to history
-        const entry = HistoryManager.add(text, data);
-        AppState.currentEntryId = entry.id;
+                    // Save to history
+                    const entry = HistoryManager.add(text, data);
+                    AppState.currentEntryId = entry.id;
 
-        // Render and display
-        renderHistoryList();
-        displayResults(data, text, Date.now());
-        switchToResultsMode();
-      } catch (error) {
-        showError(error.message);
-      } finally {
-        loading.classList.remove('visible');
-        verifyBtn.disabled = false;
-      }
-    }
+                    // Render and display
+                    renderHistoryList();
+                    displayResults(data, text, Date.now());
+                    switchToResultsMode();
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    loading.classList.remove("visible");
+                    verifyBtn.disabled = false;
+                }
+            }
 
-    function showError(message) {
-      errorMessage.textContent = message;
-      errorMessage.classList.add('visible');
-    }
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.add("visible");
+            }
 
-    function hideError() {
-      errorMessage.classList.remove('visible');
-    }
+            function hideError() {
+                errorMessage.classList.remove("visible");
+            }
 
-    function displayResults(data, text, timestamp) {
-      const prediction = data.prediction || 'unknown';
-      const headline = data.headline || prediction;
-      const predictionClass = getPredictionClass(headline);
+            function displayResults(data, text, timestamp) {
+                const prediction = data.prediction || "unknown";
+                const headline = data.headline || prediction;
+                const predictionClass = getPredictionClass(headline);
 
-      // Document header
-      document.getElementById('doc-title').textContent = 'Analysis Results';
-      document.getElementById('doc-date').textContent = formatDate(timestamp);
+                // Document header
+                document.getElementById("doc-title").textContent =
+                    "Analysis Results";
+                document.getElementById("doc-date").textContent =
+                    formatDate(timestamp);
 
-      const docPill = document.getElementById('doc-prediction-pill');
-      docPill.textContent = headline;
-      docPill.className = `doc-prediction-pill ${predictionClass}`;
+                const docPill = document.getElementById("doc-prediction-pill");
+                docPill.textContent = headline;
+                docPill.className = `doc-prediction-pill ${predictionClass}`;
 
-      // Scores
-      const humanScore = Math.round((data.fraction_human || 0) * 100);
-      const aiScore = Math.round((data.fraction_ai || 0) * 100);
-      const mixedScore = Math.round((data.fraction_ai_assisted || 0) * 100);
+                // Scores
+                const humanScore = Math.round((data.fraction_human || 0) * 100);
+                const aiScore = Math.round((data.fraction_ai || 0) * 100);
+                const mixedScore = Math.round(
+                    (data.fraction_ai_assisted || 0) * 100,
+                );
 
-      // Prediction card
-      const predictionCard = document.getElementById('prediction-card');
-      predictionCard.className = `prediction-card ${predictionClass}`;
+                // Prediction card
+                const predictionCard =
+                    document.getElementById("prediction-card");
+                predictionCard.className = `prediction-card ${predictionClass}`;
 
-      document.getElementById('prediction-icon').textContent = getIcon(predictionClass);
-      document.getElementById('prediction-text').textContent = headline;
-      document.getElementById('prediction-subtext').textContent = getPredictionSubtext(predictionClass);
+                document.getElementById("prediction-icon").textContent =
+                    getIcon(predictionClass);
+                document.getElementById("prediction-text").textContent =
+                    headline;
+                document.getElementById("prediction-subtext").textContent =
+                    getPredictionSubtext(predictionClass);
 
-      // Circular progress
-      const dominantScore = Math.max(humanScore, aiScore, mixedScore);
-      let dominantClass = 'human';
-      let dominantLabel = 'Human Written';
+                // Circular progress
+                const dominantScore = Math.max(humanScore, aiScore, mixedScore);
+                let dominantClass = "human";
+                let dominantLabel = "Human Written";
 
-      if (aiScore >= humanScore && aiScore >= mixedScore) {
-        dominantClass = 'ai';
-        dominantLabel = 'AI Generated';
-      } else if (mixedScore >= humanScore && mixedScore > aiScore) {
-        dominantClass = 'mixed';
-        dominantLabel = 'AI Assisted';
-      }
+                if (aiScore >= humanScore && aiScore >= mixedScore) {
+                    dominantClass = "ai";
+                    dominantLabel = "AI Generated";
+                } else if (mixedScore >= humanScore && mixedScore > aiScore) {
+                    dominantClass = "mixed";
+                    dominantLabel = "AI Assisted";
+                }
 
-      const progressFill = document.getElementById('progress-fill');
-      const arcLength = Math.PI * 92; // Semi-circle arc length
-      progressFill.style.strokeDasharray = arcLength;
-      progressFill.style.strokeDashoffset = arcLength - (aiScore / 100) * arcLength;
-      progressFill.className = `circular-progress-fill ${dominantClass}`;
-
-      const progressValue = document.getElementById('progress-value');
-      progressValue.innerHTML = `${dominantScore}<span class="percent">%</span>`;
-
-      document.getElementById('progress-label').textContent = dominantLabel;
-
-      // Score breakdown
-      document.getElementById('score-breakdown').innerHTML = `
+                // Score breakdown
+                document.getElementById("score-breakdown").innerHTML = `
         <div class="score-row">
           <div class="score-row-label">Human</div>
           <div class="score-row-bar">
@@ -1707,143 +1846,183 @@
         </div>
       `;
 
-      // Segments text
-      const windows = data.windows || [];
-      const segmentsText = document.getElementById('segments-text');
+                // Segments text
+                const windows = data.windows || [];
+                const segmentsText = document.getElementById("segments-text");
 
-      if (windows.length > 0) {
-        segmentsText.innerHTML = windows.map((win, index) => {
-          const segClass = getSegmentClass(win.label);
-          return `<span class="segment ${segClass}" data-segment-index="${index}">${escapeHtml(win.text)}</span>`;
-        }).join('');
+                if (windows.length > 0) {
+                    segmentsText.innerHTML = windows
+                        .map((win, index) => {
+                            const segClass = getSegmentClass(win.label);
+                            return `<span class="segment ${segClass}" data-segment-index="${index}">${escapeHtml(win.text)}</span>`;
+                        })
+                        .join("");
 
-        // Add hover handlers for segments
-        segmentsText.querySelectorAll('.segment').forEach(segment => {
-          segment.addEventListener('mouseenter', () => {
-            segmentsText.querySelectorAll('.segment.highlighted').forEach(seg => {
-              seg.classList.remove('highlighted');
-            });
-            segment.classList.add('highlighted');
-          });
-        });
-      } else {
-        segmentsText.innerHTML = `<span>${escapeHtml(text)}</span>`;
-      }
+                    // Add hover handlers for segments
+                    segmentsText
+                        .querySelectorAll(".segment")
+                        .forEach((segment) => {
+                            segment.addEventListener("mouseenter", () => {
+                                segmentsText
+                                    .querySelectorAll(".segment.highlighted")
+                                    .forEach((seg) => {
+                                        seg.classList.remove("highlighted");
+                                    });
+                                segment.classList.add("highlighted");
+                            });
+                        });
+                } else {
+                    segmentsText.innerHTML = `<span>${escapeHtml(text)}</span>`;
+                }
 
-      // Segment details
-      const segmentDetailList = document.getElementById('segment-detail-list');
-      if (windows.length > 0) {
-        segmentDetailList.innerHTML = windows.map((win, index) => {
-          const segClass = getSegmentClass(win.label);
-          return `
+                // Segment details
+                const segmentDetailList = document.getElementById(
+                    "segment-detail-list",
+                );
+                if (windows.length > 0) {
+                    segmentDetailList.innerHTML = windows
+                        .map((win, index) => {
+                            const segClass = getSegmentClass(win.label);
+                            return `
             <div class="segment-detail-item ${segClass}" data-segment-index="${index}">
-              <div class="segment-detail-label ${segClass}">${win.label || 'Unknown'}</div>
-              <div class="segment-detail-text">${escapeHtml(win.text.substring(0, 150))}${win.text.length > 150 ? '...' : ''}</div>
+              <div class="segment-detail-label ${segClass}">${win.label || "Unknown"}</div>
+              <div class="segment-detail-text">${escapeHtml(win.text.substring(0, 150))}${win.text.length > 150 ? "..." : ""}</div>
             </div>
           `;
-        }).join('');
+                        })
+                        .join("");
 
-        // Add click handlers for segment detail items
-        segmentDetailList.querySelectorAll('.segment-detail-item').forEach(item => {
-          item.addEventListener('click', () => {
-            const index = item.dataset.segmentIndex;
-            const targetSegment = segmentsText.querySelector(`.segment[data-segment-index="${index}"]`);
+                    // Add click handlers for segment detail items
+                    segmentDetailList
+                        .querySelectorAll(".segment-detail-item")
+                        .forEach((item) => {
+                            item.addEventListener("click", () => {
+                                const index = item.dataset.segmentIndex;
+                                const targetSegment =
+                                    segmentsText.querySelector(
+                                        `.segment[data-segment-index="${index}"]`,
+                                    );
 
-            if (targetSegment) {
-              // Remove highlight from all segments
-              segmentsText.querySelectorAll('.segment.highlighted').forEach(seg => {
-                seg.classList.remove('highlighted');
-              });
+                                if (targetSegment) {
+                                    // Remove highlight from all segments
+                                    segmentsText
+                                        .querySelectorAll(
+                                            ".segment.highlighted",
+                                        )
+                                        .forEach((seg) => {
+                                            seg.classList.remove("highlighted");
+                                        });
 
-              // Add highlight to target segment
-              targetSegment.classList.add('highlighted');
+                                    // Add highlight to target segment
+                                    targetSegment.classList.add("highlighted");
 
-              // Scroll segment into view
-              targetSegment.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    // Scroll segment into view
+                                    targetSegment.scrollIntoView({
+                                        behavior: "smooth",
+                                        block: "center",
+                                    });
+                                }
+                            });
+                        });
+                } else {
+                    segmentDetailList.innerHTML =
+                        '<div class="history-empty">No segment details available</div>';
+                }
+
+                // Dashboard link
+                const dashboardLink = document.getElementById("dashboard-link");
+                const dashboardAnchor =
+                    document.getElementById("dashboard-anchor");
+
+                if (data.dashboard_link) {
+                    dashboardAnchor.href = data.dashboard_link;
+                    dashboardLink.style.display = "block";
+                } else {
+                    dashboardLink.style.display = "none";
+                }
+
+                // Reset to overview tab
+                switchTab("overview");
             }
-          });
-        });
-      } else {
-        segmentDetailList.innerHTML = '<div class="history-empty">No segment details available</div>';
-      }
 
-      // Dashboard link
-      const dashboardLink = document.getElementById('dashboard-link');
-      const dashboardAnchor = document.getElementById('dashboard-anchor');
+            function getPredictionClass(prediction) {
+                if (!prediction) return "mixed";
+                const p = prediction.toLowerCase();
+                if (p.includes("human") && !p.includes("ai")) return "human";
+                if (
+                    p.includes("ai") &&
+                    !p.includes("assisted") &&
+                    !p.includes("human")
+                )
+                    return "ai";
+                return "mixed";
+            }
 
-      if (data.dashboard_link) {
-        dashboardAnchor.href = data.dashboard_link;
-        dashboardLink.style.display = 'block';
-      } else {
-        dashboardLink.style.display = 'none';
-      }
+            function getSegmentClass(label) {
+                if (!label) return "";
+                const l = label.toLowerCase();
+                if (l.includes("human") && !l.includes("ai")) return "human";
+                if (
+                    l === "ai" ||
+                    l === "ai-generated" ||
+                    l.includes("ai generated")
+                )
+                    return "ai";
+                return "mixed";
+            }
 
-      // Reset to overview tab
-      switchTab('overview');
-    }
+            function getIcon(predictionClass) {
+                switch (predictionClass) {
+                    case "human":
+                        return "✓";
+                    case "ai":
+                        return "⚠";
+                    default:
+                        return "◐";
+                }
+            }
 
-    function getPredictionClass(prediction) {
-      if (!prediction) return 'mixed';
-      const p = prediction.toLowerCase();
-      if (p.includes('human') && !p.includes('ai')) return 'human';
-      if (p.includes('ai') && !p.includes('assisted') && !p.includes('human')) return 'ai';
-      return 'mixed';
-    }
+            function getPredictionSubtext(predictionClass) {
+                switch (predictionClass) {
+                    case "human":
+                        return "This text appears to be written by a human";
+                    case "ai":
+                        return "This text appears to be AI-generated";
+                    default:
+                        return "This text appears to be a mix of human and AI writing";
+                }
+            }
 
-    function getSegmentClass(label) {
-      if (!label) return '';
-      const l = label.toLowerCase();
-      if (l.includes('human') && !l.includes('ai')) return 'human';
-      if (l === 'ai' || l === 'ai-generated' || l.includes('ai generated')) return 'ai';
-      return 'mixed';
-    }
+            function escapeHtml(text) {
+                const div = document.createElement("div");
+                div.textContent = text;
+                return div.innerHTML;
+            }
 
-    function getIcon(predictionClass) {
-      switch (predictionClass) {
-        case 'human': return '✓';
-        case 'ai': return '⚠';
-        default: return '◐';
-      }
-    }
+            function formatRelativeTime(timestamp) {
+                const now = Date.now();
+                const diff = now - timestamp;
 
-    function getPredictionSubtext(predictionClass) {
-      switch (predictionClass) {
-        case 'human': return 'This text appears to be written by a human';
-        case 'ai': return 'This text appears to be AI-generated';
-        default: return 'This text appears to be a mix of human and AI writing';
-      }
-    }
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
+                if (minutes < 1) return "Just now";
+                if (minutes < 60) return `${minutes}m ago`;
+                if (hours < 24) return `${hours}h ago`;
+                if (days < 7) return `${days}d ago`;
+                return formatDate(timestamp);
+            }
 
-    function formatRelativeTime(timestamp) {
-      const now = Date.now();
-      const diff = now - timestamp;
-
-      const minutes = Math.floor(diff / 60000);
-      const hours = Math.floor(diff / 3600000);
-      const days = Math.floor(diff / 86400000);
-
-      if (minutes < 1) return 'Just now';
-      if (minutes < 60) return `${minutes}m ago`;
-      if (hours < 24) return `${hours}h ago`;
-      if (days < 7) return `${days}d ago`;
-      return formatDate(timestamp);
-    }
-
-    function formatDate(timestamp) {
-      return new Date(timestamp).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    }
-  </script>
-</body>
+            function formatDate(timestamp) {
+                return new Date(timestamp).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+            }
+        </script>
+    </body>
 </html>
