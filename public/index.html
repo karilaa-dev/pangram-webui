@@ -39,13 +39,207 @@
       line-height: 1.6;
     }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 48px 24px;
+    /* Sidebar Toggle Button */
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 1000;
+      width: 40px;
+      height: 40px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 20px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
     }
 
-    header {
+    .sidebar-toggle:hover {
+      background: var(--bg-tertiary);
+    }
+
+    /* App Layout */
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* History Sidebar */
+    .history-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .sidebar-header button {
+      padding: 6px 12px;
+      font-size: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+
+    .sidebar-header button:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .history-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .history-item {
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-bottom: 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid transparent;
+      position: relative;
+    }
+
+    .history-item:hover {
+      border-color: var(--border);
+    }
+
+    .history-item.active {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .history-item-preview {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .history-item-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .history-item-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 100px;
+      text-transform: uppercase;
+    }
+
+    .history-item-badge.human {
+      background: var(--human-bg);
+      color: var(--human);
+    }
+
+    .history-item-badge.ai {
+      background: var(--ai-bg);
+      color: var(--ai);
+    }
+
+    .history-item-badge.mixed {
+      background: var(--mixed-bg);
+      color: var(--mixed);
+    }
+
+    .history-item-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .history-item-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      opacity: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .history-item:hover .history-item-delete {
+      opacity: 1;
+    }
+
+    .history-item-delete:hover {
+      background: var(--ai-bg);
+      border-color: var(--ai);
+      color: var(--ai);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Input Mode */
+    .input-mode {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .input-mode.hidden {
+      display: none;
+    }
+
+    .input-mode header {
       text-align: center;
       margin-bottom: 48px;
     }
@@ -71,7 +265,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 32px;
-      margin-bottom: 24px;
+      width: 100%;
     }
 
     .input-section label {
@@ -156,109 +350,126 @@
       color: var(--text-primary);
     }
 
-    .results-section {
+    .error-message {
+      background: var(--ai-bg);
+      border: 1px solid var(--ai);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      color: var(--ai);
+      margin-top: 16px;
       display: none;
     }
 
-    .results-section.visible {
+    .error-message.visible {
       display: block;
     }
 
-    .prediction-badge {
-      display: inline-flex;
+    .loading {
+      display: none;
       align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: 100px;
-      font-weight: 600;
-      font-size: 15px;
-      margin-bottom: 28px;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px;
+      color: var(--text-secondary);
     }
 
-    .prediction-badge.human {
+    .loading.visible {
+      display: flex;
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Results Mode */
+    .results-mode {
+      display: none;
+      flex: 1;
+    }
+
+    .results-mode.visible {
+      display: flex;
+    }
+
+    /* Document View */
+    .document-view {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+      min-width: 0;
+    }
+
+    .doc-header {
+      margin-bottom: 24px;
+    }
+
+    .doc-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .doc-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .doc-prediction-pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+    }
+
+    .doc-prediction-pill.human {
       background: var(--human-bg);
       color: var(--human);
     }
 
-    .prediction-badge.ai {
+    .doc-prediction-pill.ai {
       background: var(--ai-bg);
       color: var(--ai);
     }
 
-    .prediction-badge.mixed {
+    .doc-prediction-pill.mixed {
       background: var(--mixed-bg);
       color: var(--mixed);
     }
 
-    .prediction-badge .icon {
-      font-size: 18px;
+    .back-to-input {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 24px;
+      background: none;
+      border: none;
+      padding: 0;
     }
 
-    .scores-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-
-    @media (max-width: 600px) {
-      .scores-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .score-item {
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-sm);
-      padding: 20px;
-    }
-
-    .score-label {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .score-value {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 12px;
-    }
-
-    .score-value.human { color: var(--human); }
-    .score-value.ai { color: var(--ai); }
-    .score-value.mixed { color: var(--mixed); }
-
-    .score-bar {
-      height: 6px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .score-bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.6s ease-out;
-    }
-
-    .score-bar-fill.human { background: var(--human); }
-    .score-bar-fill.ai { background: var(--ai); }
-    .score-bar-fill.mixed { background: var(--mixed); }
-
-    .segments-section h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      color: var(--text-primary);
+    .back-to-input:hover {
+      color: var(--accent-hover);
     }
 
     .segments-text {
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-sm);
-      padding: 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
       line-height: 1.8;
       font-size: 15px;
     }
@@ -309,48 +520,237 @@
     .legend-dot.ai { background: var(--ai); }
     .legend-dot.mixed { background: var(--mixed); }
 
-    .error-message {
-      background: var(--ai-bg);
-      border: 1px solid var(--ai);
-      border-radius: var(--radius-sm);
+    /* Results Panel */
+    .results-panel {
+      width: 400px;
+      flex-shrink: 0;
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-tab {
+      flex: 1;
       padding: 16px;
-      color: var(--ai);
-      display: none;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
     }
 
-    .error-message.visible {
-      display: block;
-    }
-
-    .loading {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 40px;
+    .panel-tab:hover {
       color: var(--text-secondary);
     }
 
-    .loading.visible {
+    .panel-tab.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--accent);
+    }
+
+    .panel-content {
+      padding: 24px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Prediction Card */
+    .prediction-card {
+      text-align: center;
+      padding: 24px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+
+    .prediction-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .prediction-card.human .prediction-icon { color: var(--human); }
+    .prediction-card.ai .prediction-icon { color: var(--ai); }
+    .prediction-card.mixed .prediction-icon { color: var(--mixed); }
+
+    .prediction-text {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .prediction-subtext {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Circular Progress */
+    .progress-section {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .circular-progress {
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 16px;
+    }
+
+    .circular-progress-bg {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 12;
+    }
+
+    .circular-progress-fill {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: center;
+      transition: stroke-dashoffset 0.6s ease-out;
+    }
+
+    .circular-progress-fill.human { stroke: var(--human); }
+    .circular-progress-fill.ai { stroke: var(--ai); }
+    .circular-progress-fill.mixed { stroke: var(--mixed); }
+
+    .progress-label {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .progress-value {
+      font-size: 36px;
+      font-weight: 700;
+    }
+
+    .progress-value.human { color: var(--human); }
+    .progress-value.ai { color: var(--ai); }
+    .progress-value.mixed { color: var(--mixed); }
+
+    /* Score Breakdown */
+    .score-breakdown {
       display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .score-row-label {
+      width: 100px;
+      font-size: 13px;
+      color: var(--text-secondary);
     }
 
+    .score-row-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .score-row-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.6s ease-out;
+    }
+
+    .score-row-fill.human { background: var(--human); }
+    .score-row-fill.ai { background: var(--ai); }
+    .score-row-fill.mixed { background: var(--mixed); }
+
+    .score-row-value {
+      width: 48px;
+      text-align: right;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .score-row-value.human { color: var(--human); }
+    .score-row-value.ai { color: var(--ai); }
+    .score-row-value.mixed { color: var(--mixed); }
+
+    /* Segment Details */
+    .segment-details {
+      margin-top: 24px;
+    }
+
+    .segment-details summary {
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-secondary);
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+    }
+
+    .segment-details summary:hover {
+      color: var(--text-primary);
+    }
+
+    .segment-detail-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .segment-detail-item {
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid;
+    }
+
+    .segment-detail-item.human { border-left-color: var(--human); }
+    .segment-detail-item.ai { border-left-color: var(--ai); }
+    .segment-detail-item.mixed { border-left-color: var(--mixed); }
+
+    .segment-detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .segment-detail-label.human { color: var(--human); }
+    .segment-detail-label.ai { color: var(--ai); }
+    .segment-detail-label.mixed { color: var(--mixed); }
+
+    .segment-detail-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Dashboard Link */
     .dashboard-link {
-      margin-top: 20px;
-      padding-top: 20px;
+      margin-top: 24px;
+      padding-top: 24px;
       border-top: 1px solid var(--border);
     }
 
@@ -367,81 +767,278 @@
       color: var(--accent-hover);
       text-decoration: underline;
     }
+
+    /* Responsive Styles */
+    @media (max-width: 1200px) {
+      .sidebar-toggle {
+        display: flex;
+      }
+
+      .history-sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        z-index: 999;
+        transition: left 0.3s ease;
+      }
+
+      .history-sidebar.open {
+        left: 0;
+      }
+
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+      }
+
+      .sidebar-overlay.visible {
+        display: block;
+      }
+
+      .input-mode {
+        padding-top: 80px;
+      }
+
+      .document-view {
+        padding-top: 80px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .results-mode {
+        flex-direction: column;
+      }
+
+      .results-panel {
+        width: 100%;
+        height: auto;
+        position: static;
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+
+      .document-view {
+        padding: 80px 16px 24px;
+      }
+
+      .input-mode {
+        padding: 80px 16px 24px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="logo">Pangram</div>
-      <p class="tagline">AI-generated text detection</p>
-    </header>
+  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <div class="card input-section">
-      <label for="text-input">Paste your text to analyze</label>
-      <textarea
-        id="text-input"
-        placeholder="Enter or paste the text you want to verify for AI-generated content..."
-      ></textarea>
-      <div class="char-count"><span id="char-count">0</span> characters</div>
-      <div class="button-row">
-        <button class="btn-primary" id="verify-btn">Verify Text</button>
-        <button class="btn-secondary" id="clear-btn">Clear</button>
+  <div class="app-layout">
+    <!-- History Sidebar -->
+    <aside class="history-sidebar" id="history-sidebar">
+      <div class="sidebar-header">
+        <h2>History</h2>
+        <button id="clear-history">Clear All</button>
       </div>
-    </div>
+      <div class="history-list" id="history-list">
+        <div class="history-empty">No analysis history yet</div>
+      </div>
+    </aside>
 
-    <div class="error-message" id="error-message"></div>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Input Mode -->
+      <div class="input-mode" id="input-mode">
+        <header>
+          <div class="logo">Pangram</div>
+          <p class="tagline">AI-generated text detection</p>
+        </header>
 
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <span>Analyzing text...</span>
-    </div>
-
-    <div class="card results-section" id="results">
-      <div id="prediction-container"></div>
-
-      <div class="scores-grid" id="scores-grid"></div>
-
-      <div class="segments-section">
-        <h3>Detailed Analysis</h3>
-        <div class="segments-text" id="segments-text"></div>
-        <div class="legend">
-          <div class="legend-item">
-            <div class="legend-dot human"></div>
-            <span>Human-written</span>
+        <div class="card input-section">
+          <label for="text-input">Paste your text to analyze</label>
+          <textarea
+            id="text-input"
+            placeholder="Enter or paste the text you want to verify for AI-generated content..."
+          ></textarea>
+          <div class="char-count"><span id="char-count">0</span> characters</div>
+          <div class="button-row">
+            <button class="btn-primary" id="verify-btn">Verify Text</button>
+            <button class="btn-secondary" id="clear-btn">Clear</button>
           </div>
-          <div class="legend-item">
-            <div class="legend-dot ai"></div>
-            <span>AI-generated</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot mixed"></div>
-            <span>AI-assisted</span>
+          <div class="error-message" id="error-message"></div>
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>Analyzing text...</span>
           </div>
         </div>
       </div>
 
-      <div class="dashboard-link" id="dashboard-link" style="display: none;">
-        <a href="#" target="_blank" id="dashboard-anchor">
-          View detailed report on Pangram Dashboard
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <line x1="10" y1="14" x2="21" y2="3"></line>
-          </svg>
-        </a>
+      <!-- Results Mode -->
+      <div class="results-mode" id="results-mode">
+        <!-- Document View -->
+        <div class="document-view">
+          <button class="back-to-input" id="back-to-input">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            New Analysis
+          </button>
+
+          <div class="doc-header">
+            <h1 class="doc-title" id="doc-title">Analysis Results</h1>
+            <div class="doc-meta">
+              <span id="doc-date"></span>
+              <span class="doc-prediction-pill" id="doc-prediction-pill"></span>
+            </div>
+          </div>
+
+          <div class="segments-text" id="segments-text"></div>
+
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-dot human"></div>
+              <span>Human-written</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot ai"></div>
+              <span>AI-generated</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot mixed"></div>
+              <span>AI-assisted</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Panel -->
+        <aside class="results-panel">
+          <div class="panel-tabs">
+            <button class="panel-tab active" data-tab="overview">Overview</button>
+            <button class="panel-tab" data-tab="details">Details</button>
+          </div>
+
+          <div class="panel-content">
+            <!-- Overview Tab -->
+            <div class="tab-content active" id="tab-overview">
+              <div class="prediction-card" id="prediction-card">
+                <div class="prediction-icon" id="prediction-icon"></div>
+                <div class="prediction-text" id="prediction-text"></div>
+                <div class="prediction-subtext" id="prediction-subtext"></div>
+              </div>
+
+              <div class="progress-section">
+                <svg class="circular-progress" viewBox="0 0 160 160">
+                  <circle class="circular-progress-bg" cx="80" cy="80" r="68"/>
+                  <circle class="circular-progress-fill" id="progress-fill" cx="80" cy="80" r="68"/>
+                </svg>
+                <div class="progress-value" id="progress-value">0%</div>
+                <div class="progress-label" id="progress-label">Human Written</div>
+              </div>
+
+              <div class="score-breakdown" id="score-breakdown"></div>
+
+              <div class="dashboard-link" id="dashboard-link" style="display: none;">
+                <a href="#" target="_blank" id="dashboard-anchor">
+                  View detailed report on Pangram Dashboard
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- Details Tab -->
+            <div class="tab-content" id="tab-details">
+              <div class="segment-detail-list" id="segment-detail-list"></div>
+            </div>
+          </div>
+        </aside>
       </div>
-    </div>
+    </main>
   </div>
 
   <script>
+    // History Manager
+    const HistoryManager = {
+      STORAGE_KEY: 'pangram_history',
+      MAX_ENTRIES: 50,
+
+      getAll() {
+        try {
+          return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+        } catch {
+          return [];
+        }
+      },
+
+      add(text, apiResponse) {
+        const entries = this.getAll();
+        const entry = {
+          id: crypto.randomUUID(),
+          text,
+          preview: text.substring(0, 80) + (text.length > 80 ? '...' : ''),
+          timestamp: Date.now(),
+          prediction: apiResponse.headline || apiResponse.prediction,
+          predictionClass: getPredictionClass(apiResponse.headline || apiResponse.prediction),
+          apiResponse
+        };
+        entries.unshift(entry);
+        if (entries.length > this.MAX_ENTRIES) entries.pop();
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(entries));
+        return entry;
+      },
+
+      get(id) {
+        return this.getAll().find(e => e.id === id);
+      },
+
+      delete(id) {
+        const entries = this.getAll().filter(e => e.id !== id);
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(entries));
+        return entries;
+      },
+
+      clearAll() {
+        localStorage.removeItem(this.STORAGE_KEY);
+      }
+    };
+
+    // App State
+    const AppState = {
+      mode: 'input',
+      currentEntryId: null,
+      sidebarOpen: false,
+      activeTab: 'overview'
+    };
+
+    // DOM Elements
     const textInput = document.getElementById('text-input');
     const charCount = document.getElementById('char-count');
     const verifyBtn = document.getElementById('verify-btn');
     const clearBtn = document.getElementById('clear-btn');
     const loading = document.getElementById('loading');
-    const results = document.getElementById('results');
     const errorMessage = document.getElementById('error-message');
+    const inputMode = document.getElementById('input-mode');
+    const resultsMode = document.getElementById('results-mode');
+    const historySidebar = document.getElementById('history-sidebar');
+    const historyList = document.getElementById('history-list');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const backToInput = document.getElementById('back-to-input');
+    const clearHistoryBtn = document.getElementById('clear-history');
+    const panelTabs = document.querySelectorAll('.panel-tab');
 
+    // Initialize
+    renderHistoryList();
+
+    // Event Listeners
     textInput.addEventListener('input', () => {
       charCount.textContent = textInput.value.length;
     });
@@ -449,11 +1046,128 @@
     clearBtn.addEventListener('click', () => {
       textInput.value = '';
       charCount.textContent = '0';
-      results.classList.remove('visible');
       errorMessage.classList.remove('visible');
     });
 
-    verifyBtn.addEventListener('click', async () => {
+    verifyBtn.addEventListener('click', handleVerify);
+
+    backToInput.addEventListener('click', () => {
+      switchToInputMode();
+    });
+
+    sidebarToggle.addEventListener('click', () => {
+      toggleSidebar();
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      toggleSidebar(false);
+    });
+
+    clearHistoryBtn.addEventListener('click', () => {
+      if (confirm('Clear all history?')) {
+        HistoryManager.clearAll();
+        renderHistoryList();
+        if (AppState.mode === 'results') {
+          switchToInputMode();
+        }
+      }
+    });
+
+    panelTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.dataset.tab;
+        switchTab(tabId);
+      });
+    });
+
+    // Functions
+    function toggleSidebar(open) {
+      AppState.sidebarOpen = open !== undefined ? open : !AppState.sidebarOpen;
+      historySidebar.classList.toggle('open', AppState.sidebarOpen);
+      sidebarOverlay.classList.toggle('visible', AppState.sidebarOpen);
+    }
+
+    function switchTab(tabId) {
+      AppState.activeTab = tabId;
+      panelTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+      document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.toggle('active', c.id === `tab-${tabId}`);
+      });
+    }
+
+    function switchToInputMode() {
+      AppState.mode = 'input';
+      AppState.currentEntryId = null;
+      inputMode.classList.remove('hidden');
+      resultsMode.classList.remove('visible');
+      updateActiveHistoryItem();
+    }
+
+    function switchToResultsMode() {
+      AppState.mode = 'results';
+      inputMode.classList.add('hidden');
+      resultsMode.classList.add('visible');
+    }
+
+    function updateActiveHistoryItem() {
+      document.querySelectorAll('.history-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.id === AppState.currentEntryId);
+      });
+    }
+
+    function renderHistoryList() {
+      const entries = HistoryManager.getAll();
+
+      if (entries.length === 0) {
+        historyList.innerHTML = '<div class="history-empty">No analysis history yet</div>';
+        return;
+      }
+
+      historyList.innerHTML = entries.map(entry => `
+        <div class="history-item ${entry.id === AppState.currentEntryId ? 'active' : ''}" data-id="${entry.id}">
+          <button class="history-item-delete" data-id="${entry.id}">&times;</button>
+          <div class="history-item-preview">${escapeHtml(entry.preview)}</div>
+          <div class="history-item-meta">
+            <span class="history-item-badge ${entry.predictionClass}">${entry.predictionClass}</span>
+            <span class="history-item-time">${formatRelativeTime(entry.timestamp)}</span>
+          </div>
+        </div>
+      `).join('');
+
+      // Add click handlers
+      historyList.querySelectorAll('.history-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          if (e.target.classList.contains('history-item-delete')) return;
+          const id = item.dataset.id;
+          loadHistoryEntry(id);
+        });
+      });
+
+      historyList.querySelectorAll('.history-item-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          HistoryManager.delete(id);
+          renderHistoryList();
+          if (AppState.currentEntryId === id) {
+            switchToInputMode();
+          }
+        });
+      });
+    }
+
+    function loadHistoryEntry(id) {
+      const entry = HistoryManager.get(id);
+      if (!entry) return;
+
+      AppState.currentEntryId = id;
+      displayResults(entry.apiResponse, entry.text, entry.timestamp);
+      switchToResultsMode();
+      updateActiveHistoryItem();
+      toggleSidebar(false);
+    }
+
+    async function handleVerify() {
       const text = textInput.value.trim();
 
       if (!text) {
@@ -462,7 +1176,6 @@
       }
 
       hideError();
-      results.classList.remove('visible');
       loading.classList.add('visible');
       verifyBtn.disabled = true;
 
@@ -479,14 +1192,21 @@
           throw new Error(data.error || 'Failed to analyze text');
         }
 
-        displayResults(data);
+        // Save to history
+        const entry = HistoryManager.add(text, data);
+        AppState.currentEntryId = entry.id;
+
+        // Render and display
+        renderHistoryList();
+        displayResults(data, text, Date.now());
+        switchToResultsMode();
       } catch (error) {
         showError(error.message);
       } finally {
         loading.classList.remove('visible');
         verifyBtn.disabled = false;
       }
-    });
+    }
 
     function showError(message) {
       errorMessage.textContent = message;
@@ -497,54 +1217,83 @@
       errorMessage.classList.remove('visible');
     }
 
-    function displayResults(data) {
-      // Display prediction badge (v3 API has headline/prediction at top level)
+    function displayResults(data, text, timestamp) {
       const prediction = data.prediction || 'unknown';
       const headline = data.headline || prediction;
-      const predictionContainer = document.getElementById('prediction-container');
-
       const predictionClass = getPredictionClass(headline);
-      const icon = getIcon(predictionClass);
 
-      predictionContainer.innerHTML = `
-        <div class="prediction-badge ${predictionClass}">
-          <span class="icon">${icon}</span>
-          <span>${headline}</span>
-        </div>
-      `;
+      // Document header
+      document.getElementById('doc-title').textContent = 'Analysis Results';
+      document.getElementById('doc-date').textContent = formatDate(timestamp);
 
-      // Display scores (v3 API has fractions at top level)
-      const scoresGrid = document.getElementById('scores-grid');
+      const docPill = document.getElementById('doc-prediction-pill');
+      docPill.textContent = headline;
+      docPill.className = `doc-prediction-pill ${predictionClass}`;
 
+      // Scores
       const humanScore = Math.round((data.fraction_human || 0) * 100);
       const aiScore = Math.round((data.fraction_ai || 0) * 100);
       const mixedScore = Math.round((data.fraction_ai_assisted || 0) * 100);
 
-      scoresGrid.innerHTML = `
-        <div class="score-item">
-          <div class="score-label">Human</div>
-          <div class="score-value human">${humanScore}%</div>
-          <div class="score-bar">
-            <div class="score-bar-fill human" style="width: ${humanScore}%"></div>
+      // Prediction card
+      const predictionCard = document.getElementById('prediction-card');
+      predictionCard.className = `prediction-card ${predictionClass}`;
+
+      document.getElementById('prediction-icon').textContent = getIcon(predictionClass);
+      document.getElementById('prediction-text').textContent = headline;
+      document.getElementById('prediction-subtext').textContent = getPredictionSubtext(predictionClass);
+
+      // Circular progress
+      const dominantScore = Math.max(humanScore, aiScore, mixedScore);
+      let dominantClass = 'human';
+      let dominantLabel = 'Human Written';
+
+      if (aiScore >= humanScore && aiScore >= mixedScore) {
+        dominantClass = 'ai';
+        dominantLabel = 'AI Generated';
+      } else if (mixedScore >= humanScore && mixedScore > aiScore) {
+        dominantClass = 'mixed';
+        dominantLabel = 'AI Assisted';
+      }
+
+      const progressFill = document.getElementById('progress-fill');
+      const circumference = 2 * Math.PI * 68;
+      progressFill.style.strokeDasharray = circumference;
+      progressFill.style.strokeDashoffset = circumference - (dominantScore / 100) * circumference;
+      progressFill.className = `circular-progress-fill ${dominantClass}`;
+
+      const progressValue = document.getElementById('progress-value');
+      progressValue.textContent = `${dominantScore}%`;
+      progressValue.className = `progress-value ${dominantClass}`;
+
+      document.getElementById('progress-label').textContent = dominantLabel;
+
+      // Score breakdown
+      document.getElementById('score-breakdown').innerHTML = `
+        <div class="score-row">
+          <div class="score-row-label">Human</div>
+          <div class="score-row-bar">
+            <div class="score-row-fill human" style="width: ${humanScore}%"></div>
           </div>
+          <div class="score-row-value human">${humanScore}%</div>
         </div>
-        <div class="score-item">
-          <div class="score-label">AI Generated</div>
-          <div class="score-value ai">${aiScore}%</div>
-          <div class="score-bar">
-            <div class="score-bar-fill ai" style="width: ${aiScore}%"></div>
+        <div class="score-row">
+          <div class="score-row-label">AI Generated</div>
+          <div class="score-row-bar">
+            <div class="score-row-fill ai" style="width: ${aiScore}%"></div>
           </div>
+          <div class="score-row-value ai">${aiScore}%</div>
         </div>
-        <div class="score-item">
-          <div class="score-label">AI Assisted</div>
-          <div class="score-value mixed">${mixedScore}%</div>
-          <div class="score-bar">
-            <div class="score-bar-fill mixed" style="width: ${mixedScore}%"></div>
+        <div class="score-row">
+          <div class="score-row-label">AI Assisted</div>
+          <div class="score-row-bar">
+            <div class="score-row-fill mixed" style="width: ${mixedScore}%"></div>
           </div>
+          <div class="score-row-value mixed">${mixedScore}%</div>
         </div>
       `;
 
-      // Display windows (v3 API uses "windows" instead of "segments")
+      // Segments text
       const windows = data.windows || [];
       const segmentsText = document.getElementById('segments-text');
 
@@ -554,10 +1303,26 @@
           return `<span class="segment ${segClass}">${escapeHtml(win.text)}</span>`;
         }).join('');
       } else {
-        segmentsText.innerHTML = `<span>${escapeHtml(data.text || textInput.value)}</span>`;
+        segmentsText.innerHTML = `<span>${escapeHtml(text)}</span>`;
       }
 
-      // Dashboard link (v3 API uses "dashboard_link")
+      // Segment details
+      const segmentDetailList = document.getElementById('segment-detail-list');
+      if (windows.length > 0) {
+        segmentDetailList.innerHTML = windows.map(win => {
+          const segClass = getSegmentClass(win.label);
+          return `
+            <div class="segment-detail-item ${segClass}">
+              <div class="segment-detail-label ${segClass}">${win.label || 'Unknown'}</div>
+              <div class="segment-detail-text">${escapeHtml(win.text.substring(0, 150))}${win.text.length > 150 ? '...' : ''}</div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        segmentDetailList.innerHTML = '<div class="history-empty">No segment details available</div>';
+      }
+
+      // Dashboard link
       const dashboardLink = document.getElementById('dashboard-link');
       const dashboardAnchor = document.getElementById('dashboard-anchor');
 
@@ -568,13 +1333,15 @@
         dashboardLink.style.display = 'none';
       }
 
-      results.classList.add('visible');
+      // Reset to overview tab
+      switchTab('overview');
     }
 
     function getPredictionClass(prediction) {
+      if (!prediction) return 'mixed';
       const p = prediction.toLowerCase();
-      if (p.includes('human')) return 'human';
-      if (p.includes('ai') && !p.includes('assisted')) return 'ai';
+      if (p.includes('human') && !p.includes('ai')) return 'human';
+      if (p.includes('ai') && !p.includes('assisted') && !p.includes('human')) return 'ai';
       return 'mixed';
     }
 
@@ -594,10 +1361,43 @@
       }
     }
 
+    function getPredictionSubtext(predictionClass) {
+      switch (predictionClass) {
+        case 'human': return 'This text appears to be written by a human';
+        case 'ai': return 'This text appears to be AI-generated';
+        default: return 'This text appears to be a mix of human and AI writing';
+      }
+    }
+
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function formatRelativeTime(timestamp) {
+      const now = Date.now();
+      const diff = now - timestamp;
+
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      return formatDate(timestamp);
+    }
+
+    function formatDate(timestamp) {
+      return new Date(timestamp).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     }
   </script>
 </body>
