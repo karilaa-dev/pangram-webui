@@ -99,7 +99,7 @@ describe("HTTP API", () => {
   }
 
   test("protected routes reject anonymous and wrong-key requests", async () => {
-    for (const path of ["/api/pangram/models", "/api/humanizer/balance", "/api/humanizer/runs/x"]) {
+    for (const path of ["/api/pangram/models", "/api/pangram/tasks/x", "/api/humanizer/runs/x"]) {
       expect((await fetch(`${base}${path}`)).status).toBe(401);
       const wrong = await fetch(`${base}${path}`, { headers: { Authorization: "Bearer nope" } });
       expect(wrong.status).toBe(401);
@@ -171,7 +171,6 @@ describe("HTTP API", () => {
     expect(data.status).toBe("completed");
     expect(data.text).toBe("We use many tools. Still, it is really key.");
     expect(typeof data.score).toBe("number");
-    expect(typeof data.remainingCredits).toBe("number");
   });
 
   test("humanize validates input", async () => {
@@ -218,9 +217,7 @@ describe("HTTP API", () => {
     expect(res.models).toEqual(["pangram-3", "pangram-4"]);
   });
 
-  test("balance and plagiarism proxy through", async () => {
-    const balance: any = await (await fetch(`${base}/api/humanizer/balance`, { headers: bearer })).json();
-    expect(typeof balance.credits).toBe("number");
+  test("plagiarism proxies through", async () => {
     const plag = await fetch(`${base}/api/pangram/plagiarism`, {
       method: "POST",
       headers: bearer,
@@ -237,7 +234,7 @@ describe("HTTP API", () => {
     });
     const other = Bun.serve({ port: 0, routes: createRoutes(config) });
     try {
-      const res = await fetch(`${other.url}api/humanizer/balance`, { headers: bearer });
+      const res = await fetch(`${other.url}api/humanizer/runs/x`, { headers: bearer });
       expect(res.status).toBe(502);
       expect(((await res.json()) as any).error).toContain("rejected the configured API key");
       const pangram = await fetch(`${other.url}api/pangram/tasks`, {

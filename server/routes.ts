@@ -113,10 +113,6 @@ export function createRoutes(config: Config) {
       GET: guard(async (req) => Response.json(await stealth.run(req.params.id!))),
     },
 
-    "/api/humanizer/balance": {
-      GET: guard(async () => Response.json(await stealth.balance())),
-    },
-
     "/api/*": () => Response.json({ error: "Not found" }, { status: 404 }),
   };
 }

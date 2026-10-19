@@ -5,11 +5,15 @@ A private admin panel for humanizing text with [StealthGPT](https://www.stealthg
 ## Features
 
 - **Two tabs, usable on their own or together.**
-  - **Humanize**: paste text, pick StealthGPT's quality mode (Fast or Quality), model (Lite, Standard or Super) and output format, and humanize. Re-humanize any version, or edit one by hand. Every edit is saved as a new version.
-  - **Pangram check**: paste text for a full Pangram report, or check any version of a document.
+  - **Humanize**: paste text, pick StealthGPT's model (Lite, Standard or Super), quality mode (Fast or Quality) and output format, and humanize. Re-humanize any version, or edit one by hand. Every edit is saved as a new version.
+  - **Pangram**: paste text for a full Pangram report, or check any version of a document.
   - **In sequence**: after humanizing, one **Check with Pangram** click checks the new version. Turn on *Then check with Pangram* to have each rewrite checked automatically.
-- **Every version is kept.** A document holds the original text plus every humanized or edited version. Versions never change after they are created. Each one keeps its own StealthGPT human score, settings, credits spent, Pangram result and plagiarism result.
-- **Version comparison.** Compare a version side by side with its source. The report's *Versions* tab lists every version's StealthGPT score and Pangram verdict.
+- **Every version is kept.** A document holds the original text plus every humanized or edited version. Versions never change after they are created. Each one keeps its own StealthGPT settings, human score, cost, Pangram result and plagiarism result.
+- **One layout for both tabs.**
+  - **Versions:** a strip of version cards sits on top, followed by a header with the selected version's StealthGPT settings, human score, word count, cost and Pangram verdict.
+  - **Text:** the version's text stays in the same place in both tabs.
+  - **Right column:** this is the only part that changes. The Humanize tab shows humanize and Pangram actions. The Pangram tab shows the detailed report and adds highlights to the text.
+- **Version comparison.** Compare a version side by side with its source. Each version card shows its StealthGPT score and Pangram verdict at a glance.
 - **Full Pangram report.**
   - Highlighting for AI-generated, AI-assisted and human text, with tooltips for each segment.
   - Verdict, composition, humanizer detection, text statistics and confidence.
@@ -19,7 +23,7 @@ A private admin panel for humanizing text with [StealthGPT](https://www.stealthg
   - Export by printing to PDF, as a copied summary, as CSV, or as JSON.
 - **Long runs are safe.** Humanize runs and Pangram checks are stored with their run/task id. They resume after a page reload instead of losing a result you paid for. Each humanize run sends an idempotency key, so a retry never charges twice.
 - **Protected by an admin API key.** All API routes need a session or the key itself (see [Security](#security)).
-- **Cost estimates.** Before each humanize run or Pangram check, ZamWriter shows its estimated price. Each version records what its run and check cost, each document shows its running total, and the header shows your remaining StealthGPT credits (see [Pricing](#pricing)).
+- **Cost estimates.** Before each humanize run or Pangram check, ZamWriter shows its estimated price. Each version records what its run and check cost, and each document shows its running total (see [Pricing](#pricing)).
 - Organize documents with titles, tags and notes, and search across all of them. Light and dark themes, and a responsive layout.
 
 ## Setup
@@ -70,7 +74,7 @@ For example, a 412-word text costs:
 How the numbers are worked out:
 
 - **Estimates use your current choices.** Before a run, the humanize estimate assumes the rewrite is about as long as the input. Each model option shows its rate in the dropdown.
-- **Costs are recorded per run.** After a run, ZamWriter records its cost from the actual input and output word counts. It also shows the credits StealthGPT reports spending.
+- **Costs are recorded per run.** After a run, ZamWriter records its cost from the actual input and output word counts.
 - **Totals include re-checks.** Each document shows a running total that counts re-checks too.
 - **Not covered:** Plagiarism checks are billed separately by Pangram. StealthGPT's starter pack, $100 for 500,000 words, isn't factored in either.
 
@@ -78,7 +82,7 @@ The rates are hard-coded in [`src/lib/pricing.ts`](src/lib/pricing.ts).
 
 ## Settings
 
-The quality mode, model, output format and Pangram model selects have no "default" option. The first time, they start on the lowest option: Fast, Lite, plain text, and the oldest Pangram model the API lists. After that, ZamWriter remembers your latest choice in this browser.
+The model, quality mode, output format and Pangram model selects have no "default" option. The first time, they start on the lowest option: Lite, Fast, plain text, and the oldest Pangram model the API lists. After that, ZamWriter remembers your latest choice in this browser.
 
 ## Security
 
@@ -109,8 +113,7 @@ All routes except `/api/auth/*` require a session cookie or a Bearer token.
 | `POST` | `/api/auth/login` | `{ key }` → sets the session cookie |
 | `POST` | `/api/auth/logout` | Clears the session cookie |
 | `POST` | `/api/humanizer/runs` | `{ text, qualityMode, model?, outputFormat, idempotencyKey? }` → starts a StealthGPT run |
-| `GET` | `/api/humanizer/runs/:id` | Run status. Once `done`, includes `text`, `score`, `creditsSpent` and `remainingCredits` |
-| `GET` | `/api/humanizer/balance` | Remaining StealthGPT credits |
+| `GET` | `/api/humanizer/runs/:id` | Run status. Once `done`, includes `text` and `score` |
 | `GET` | `/api/pangram/models` | Detection models available to the Pangram key |
 | `POST` | `/api/pangram/tasks` | `{ text, model }` → starts a Pangram detection task |
 | `GET` | `/api/pangram/tasks/:id` | Task stage. Once `done`, includes the full result |

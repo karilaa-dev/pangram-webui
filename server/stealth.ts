@@ -24,8 +24,6 @@ export interface HumanizeRun {
   text: string | null;
   /** Human-likeness score 0–100 (StealthGPT's `howLikelyToBeDetected`; higher = more human). */
   score: number | null;
-  creditsSpent: number | null;
-  remainingCredits: number | null;
   error: string | null;
 }
 
@@ -51,12 +49,6 @@ export function normalizeRun(data: any): HumanizeRun {
     done: TERMINAL.has(status),
     text,
     score: numberOrNull(data?.howLikelyToBeDetected, nested.howLikelyToBeDetected),
-    creditsSpent: numberOrNull(data?.creditsSpent, data?.billing?.creditsSpent, nested.creditsSpent),
-    remainingCredits: numberOrNull(
-      data?.remainingCredits,
-      data?.billing?.remainingCredits,
-      nested.remainingCredits,
-    ),
     error: status === "failed" || status === "cancelled" ? error || `Run ${status}` : null,
   };
 }
@@ -112,18 +104,5 @@ export function stealthClient(config: Config["stealth"]) {
       return { ...run, runId: run.runId || runId };
     },
 
-    async balance(): Promise<{ credits: number | null }> {
-      const data = await call("/api/stealthify/balance");
-      return {
-        credits: numberOrNull(
-          data?.remainingCredits,
-          data?.balance,
-          data?.credits,
-          data?.remaining,
-          data?.data?.remainingCredits,
-          data?.data?.balance,
-        ),
-      };
-    },
   };
 }

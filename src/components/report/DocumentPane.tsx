@@ -1,9 +1,9 @@
-import { LayerCard } from "@cloudflare/kumo/components/layer-card";
 import { cn } from "@cloudflare/kumo/utils";
 import { useRef, useState, type ReactNode } from "react";
-import { formatDate, num, pct } from "../../lib/format";
+import { pct } from "../../lib/format";
 import type { SegClass, Segment, SegmentModel } from "../../lib/pangram";
 import { Swatch } from "../common";
+import { TEXT_CLASS } from "../Layout";
 
 export type Highlights = Record<SegClass | "plag", boolean>;
 
@@ -33,30 +33,56 @@ const CHIPS: { key: keyof Highlights; label: string }[] = [
   { key: "plag", label: "Plagiarism" },
 ];
 
-export function DocumentPane({
-  title,
-  checkedAt,
-  model,
-  ranges,
-  counts,
+export function HighlightToggles({
   highlights,
   onToggle,
+  counts,
+  plagCount,
+}: {
+  highlights: Highlights;
+  onToggle: (key: keyof Highlights) => void;
+  counts: Record<SegClass, number>;
+  plagCount: number;
+}) {
+  return (
+    <>
+      {CHIPS.filter((c) => c.key !== "plag" || plagCount > 0).map((c) => (
+        <button
+          key={c.key}
+          aria-pressed={highlights[c.key]}
+          onClick={() => onToggle(c.key)}
+          className={cn(
+            "flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs ring-1 transition",
+            highlights[c.key]
+              ? "bg-kumo-base text-kumo-default ring-kumo-line"
+              : "text-kumo-subtle ring-kumo-hairline opacity-60 hover:opacity-100",
+          )}
+        >
+          <Swatch cls={c.key} />
+          {c.label}
+          <span className="text-kumo-subtle">{c.key === "plag" ? plagCount : counts[c.key]}</span>
+        </button>
+      ))}
+    </>
+  );
+}
+
+/** The version's text with one span per Pangram segment, plus a hover tooltip. */
+export function HighlightedText({
+  model,
+  ranges,
+  highlights,
   selected,
   onSelect,
 }: {
-  title: string;
-  checkedAt: number;
   model: SegmentModel;
   ranges: [number, number][];
-  counts: Record<SegClass, number>;
   highlights: Highlights;
-  onToggle: (key: keyof Highlights) => void;
   selected: number;
   onSelect: (index: number) => void;
 }) {
   const [hover, setHover] = useState<{ seg: Segment; x: number; y: number } | null>(null);
   const tooltip = useRef<HTMLDivElement>(null);
-  const words = model.segments.reduce((a, s) => a + s.words, 0);
 
   const segAt = (target: EventTarget) => {
     const el = (target as HTMLElement).closest<HTMLElement>(".seg");
@@ -74,65 +100,38 @@ export function DocumentPane({
   }
 
   return (
-    <LayerCard className="min-w-0">
-      <LayerCard.Secondary className="no-print flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-xs text-kumo-subtle">Highlight</span>
-        {CHIPS.filter((c) => c.key !== "plag" || ranges.length > 0).map((c) => (
-          <button
-            key={c.key}
-            aria-pressed={highlights[c.key]}
-            onClick={() => onToggle(c.key)}
-            className={cn(
-              "flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs ring-1 transition",
-              highlights[c.key]
-                ? "bg-kumo-base text-kumo-default ring-kumo-line"
-                : "text-kumo-subtle ring-kumo-hairline opacity-60 hover:opacity-100",
-            )}
-          >
-            <Swatch cls={c.key} />
-            {c.label}
-            <span className="text-kumo-subtle">{c.key === "plag" ? ranges.length : counts[c.key]}</span>
-          </button>
-        ))}
-      </LayerCard.Secondary>
-      <LayerCard.Primary className="px-5 py-6 sm:px-8 sm:py-8">
-        <div className="mb-5 border-b border-kumo-hairline pb-4">
-          <h2 className="text-lg font-semibold text-kumo-strong">{title}</h2>
-          <div className="mt-1 text-xs text-kumo-subtle">
-            {num(words)} words · {num(model.segments.length)} segments · checked {formatDate(checkedAt)}
-          </div>
-        </div>
-        <div
-          className={cn(
-            "zw-doc text-[15px] leading-8 text-kumo-default",
-            !highlights.ai && "hide-ai",
-            !highlights.assisted && "hide-assisted",
-            !highlights.human && "hide-human",
-            highlights.plag && "show-plag",
-          )}
-          onPointerOver={(e) => {
-            if (e.pointerType !== "mouse") return;
-            const seg = segAt(e.target);
-            setHover(seg ? { seg, x: e.clientX, y: e.clientY } : null);
-          }}
-          onPointerMove={(e) => hover && setHover({ ...hover, x: e.clientX, y: e.clientY })}
-          onPointerLeave={() => setHover(null)}
-          onClick={(e) => {
-            const seg = segAt(e.target);
-            if (seg) onSelect(seg.index);
-          }}
-        >
-          {model.pieces.map((p) =>
-            p.seg ? (
-              <span key={p.start} data-i={p.seg.index} className={cn("seg", p.seg.cls, p.seg.index === selected && "selected")}>
-                {renderSlice(model.text, p.start, p.end, ranges)}
-              </span>
-            ) : (
-              <span key={p.start}>{renderSlice(model.text, p.start, p.end, ranges)}</span>
-            ),
-          )}
-        </div>
-      </LayerCard.Primary>
+    <>
+      <div
+        className={cn(
+          "zw-doc",
+          TEXT_CLASS,
+          !highlights.ai && "hide-ai",
+          !highlights.assisted && "hide-assisted",
+          !highlights.human && "hide-human",
+          highlights.plag && "show-plag",
+        )}
+        onPointerOver={(e) => {
+          if (e.pointerType !== "mouse") return;
+          const seg = segAt(e.target);
+          setHover(seg ? { seg, x: e.clientX, y: e.clientY } : null);
+        }}
+        onPointerMove={(e) => hover && setHover({ ...hover, x: e.clientX, y: e.clientY })}
+        onPointerLeave={() => setHover(null)}
+        onClick={(e) => {
+          const seg = segAt(e.target);
+          if (seg) onSelect(seg.index);
+        }}
+      >
+        {model.pieces.map((p) =>
+          p.seg ? (
+            <span key={p.start} data-i={p.seg.index} className={cn("seg", p.seg.cls, p.seg.index === selected && "selected")}>
+              {renderSlice(model.text, p.start, p.end, ranges)}
+            </span>
+          ) : (
+            <span key={p.start}>{renderSlice(model.text, p.start, p.end, ranges)}</span>
+          ),
+        )}
+      </div>
 
       {hover && (
         <div
@@ -160,6 +159,6 @@ export function DocumentPane({
             ))}
         </div>
       )}
-    </LayerCard>
+    </>
   );
 }

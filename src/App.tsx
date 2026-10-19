@@ -1,21 +1,20 @@
-import { Badge } from "@cloudflare/kumo/components/badge";
 import { Button } from "@cloudflare/kumo/components/button";
 import { Dialog } from "@cloudflare/kumo/components/dialog";
 import { Loader } from "@cloudflare/kumo/components/loader";
 import { Tabs } from "@cloudflare/kumo/components/tabs";
 import { Tooltip } from "@cloudflare/kumo/components/tooltip";
-import { CoinsIcon, ListIcon, MagicWandIcon, MoonIcon, ScanIcon, SignOutIcon, SunIcon } from "@phosphor-icons/react";
+import { ListIcon, MagicWandIcon, MoonIcon, ScanIcon, SignOutIcon, SunIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { DocList } from "./components/DocList";
-import { HumanizeView } from "./components/HumanizeView";
+import { DocWorkspace } from "./components/DocWorkspace";
+import { NewHumanize } from "./components/HumanizeView";
 import { Login } from "./components/Login";
 import { Logo } from "./components/Logo";
-import { PangramView } from "./components/PangramView";
+import { NewCheck } from "./components/PangramView";
 import { api, setUnauthorizedHandler, type Session } from "./lib/api";
-import { num } from "./lib/format";
-import { credits, onVersionCreated, pumpJobs, refreshCredits } from "./lib/jobs";
+import { onVersionCreated, pumpJobs } from "./lib/jobs";
 import { currentRoute, navigate, useRoute } from "./lib/router";
-import { store, storeReady, toasts, useObservable } from "./lib/store";
+import { store, storeReady, toasts, useDoc, useObservable } from "./lib/store";
 import { useTheme } from "./lib/theme";
 import type { Services, Tab } from "./lib/types";
 
@@ -59,23 +58,23 @@ function FullPageLoader() {
 function Workspace({ services, onLogout }: { services: Services; onLogout: () => void }) {
   const ready = useObservable(storeReady);
   const route = useRoute();
+  const doc = useDoc(route.docId);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     store.init().then(pumpJobs);
-    if (services.humanizer) refreshCredits();
     // Jump to a freshly humanized version if its document is open.
     return onVersionCreated((docId, versionId) => {
       const r = currentRoute();
       if (r.docId === docId && r.tab === "humanize") navigate({ ...r, versionId });
     });
-  }, [services.humanizer]);
+  }, []);
 
   useEffect(() => setDrawerOpen(false), [route.docId, route.tab]);
 
   return (
     <div className="print-full flex h-full flex-col">
-      <Header tab={route.tab} services={services} onLogout={onLogout} onMenu={() => setDrawerOpen(true)} />
+      <Header tab={route.tab} onLogout={onLogout} onMenu={() => setDrawerOpen(true)} />
       <div className="print-full flex min-h-0 flex-1">
         <aside className="no-print hidden w-72 shrink-0 flex-col border-r border-kumo-hairline bg-kumo-base md:flex">
           <DocList route={route} />
@@ -83,10 +82,12 @@ function Workspace({ services, onLogout }: { services: Services; onLogout: () =>
         <main className="print-full min-w-0 flex-1 overflow-y-auto" id="main">
           {!ready ? (
             <FullPageLoader />
+          ) : doc ? (
+            <DocWorkspace doc={doc} route={route} services={services} />
           ) : route.tab === "humanize" ? (
-            <HumanizeView route={route} services={services} />
+            <NewHumanize services={services} />
           ) : (
-            <PangramView route={route} services={services} />
+            <NewCheck services={services} />
           )}
         </main>
       </div>
@@ -116,25 +117,14 @@ const TAB_ITEMS = [
     label: (
       <span className="flex items-center gap-1.5">
         <ScanIcon size={16} />
-        Pangram<span className="hidden sm:inline"> check</span>
+        Pangram
       </span>
     ),
   },
 ];
 
-function Header({
-  tab,
-  services,
-  onLogout,
-  onMenu,
-}: {
-  tab: Tab;
-  services: Services;
-  onLogout: () => void;
-  onMenu: () => void;
-}) {
+function Header({ tab, onLogout, onMenu }: { tab: Tab; onLogout: () => void; onMenu: () => void }) {
   const [mode, toggleTheme] = useTheme();
-  const balance = useObservable(credits);
 
   return (
     <header className="no-print flex h-14 shrink-0 items-center gap-2 border-b border-kumo-hairline bg-kumo-base px-2 sm:gap-3 sm:px-4">
@@ -150,18 +140,6 @@ function Header({
         onValueChange={(t) => navigate({ ...currentRoute(), tab: t as Tab })}
       />
       <div className="flex-1" />
-      {services.humanizer && balance !== null && (
-        <Tooltip
-          content="StealthGPT credits remaining"
-          render={
-            <span className="hidden sm:inline-flex">
-              <Badge variant="outline" icon={<CoinsIcon size={14} />}>
-                {num(balance)}
-              </Badge>
-            </span>
-          }
-        />
-      )}
       <Tooltip
         content={mode === "dark" ? "Light theme" : "Dark theme"}
         render={

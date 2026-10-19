@@ -1,34 +1,39 @@
+import { Banner } from "@cloudflare/kumo/components/banner";
 import { Button } from "@cloudflare/kumo/components/button";
 import { DropdownMenu } from "@cloudflare/kumo/components/dropdown";
 import { LayerCard } from "@cloudflare/kumo/components/layer-card";
+import { Loader } from "@cloudflare/kumo/components/loader";
 import { Tabs } from "@cloudflare/kumo/components/tabs";
 import {
   ArrowClockwiseIcon,
   ArrowSquareOutIcon,
   BracketsCurlyIcon,
   CopyIcon,
-  DownloadSimpleIcon,
+  DotsThreeIcon,
   FileCsvIcon,
   PrinterIcon,
+  WarningCircleIcon,
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
-import { download, formatRelativeTime, safeUrl } from "../../lib/format";
-import { startPangram } from "../../lib/jobs";
+import { countWords, download, safeUrl } from "../../lib/format";
+import { STAGE_LABELS, pangramJobFor, retryJob, startPangram } from "../../lib/jobs";
 import { buildSegments, computeStats, plagRanges, segmentsCsv, summaryText, type SegClass } from "../../lib/pangram";
-import { usd } from "../../lib/pricing";
-import { navigate } from "../../lib/router";
+import { pangramCost, usd } from "../../lib/pricing";
+import { usePreferences } from "../../lib/settings";
 import { toasts, versionLabel } from "../../lib/store";
 import type { Doc, PangramCheck, Version } from "../../lib/types";
-import { VerdictBadge } from "../common";
-import { DocumentPane, type Highlights } from "./DocumentPane";
+import { CopyButton } from "../common";
+import { Columns, TextPanel } from "../Layout";
+import { HighlightToggles, HighlightedText, type Highlights } from "./DocumentPane";
 import { Graph } from "./Graph";
 import { Overview } from "./Overview";
 import { Segments } from "./Segments";
-import { Versions } from "./Versions";
 
-type ReportTab = "overview" | "graph" | "segments" | "versions";
+type ReportTab = "overview" | "graph" | "segments";
 
-export function Report({ doc, version, check, model }: { doc: Doc; version: Version; check: PangramCheck; model: string }) {
+/** Pangram tab for a checked version: the highlighted text plus the detailed report. */
+export function PangramReport({ doc, version, check }: { doc: Doc; version: Version; check: PangramCheck }) {
+  const [prefs] = usePreferences();
   const [tab, setTab] = useState<ReportTab>("overview");
   const [selected, setSelected] = useState(-1);
   const [filter, setFilter] = useState<SegClass | "all">("all");
@@ -39,6 +44,8 @@ export function Report({ doc, version, check, model }: { doc: Doc; version: Vers
   const ranges = useMemo(() => plagRanges(version.plagiarism, segModel.text), [version.plagiarism, segModel]);
   const segments = segModel.segments;
   const label = versionLabel(doc, version);
+  const job = pangramJobFor(doc, version.id);
+  const dashboard = safeUrl(check.result.dashboard_link);
 
   function select(i: number, scroll = true) {
     if (i < 0 || i >= segments.length) return;
@@ -82,33 +89,61 @@ export function Report({ doc, version, check, model }: { doc: Doc; version: Vers
     }
   }
 
-  return (
-    <div>
-      <div className="no-print mb-3 flex flex-wrap items-center gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-sm text-kumo-subtle">
-          <VerdictBadge result={check.result} />
-          <span className="truncate">
-            {label} checked {formatRelativeTime(check.checkedAt).toLowerCase()} with <b className="font-medium text-kumo-default">{check.model}</b>
-            {!!check.costUsd && ` · ≈ ${usd(check.costUsd)}`}
-          </span>
-        </div>
-        <Button size="sm" icon={ArrowClockwiseIcon} onClick={() => startPangram(doc.id, version.id, model)}>
-          Re-check
-        </Button>
-        {safeUrl(check.result.dashboard_link) && (
-          <a
-            href={safeUrl(check.result.dashboard_link)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm text-kumo-default ring-1 ring-kumo-line hover:bg-kumo-tint"
-          >
-            <ArrowSquareOutIcon size={16} />
-            Pangram dashboard
-          </a>
-        )}
+  const text = (
+    <TextPanel
+      toolbar={
+        <HighlightToggles
+          highlights={highlights}
+          onToggle={(k) => setHighlights({ ...highlights, [k]: !highlights[k] })}
+          counts={stats.segCounts}
+          plagCount={ranges.length}
+        />
+      }
+      actions={<CopyButton text={version.text} />}
+    >
+      <HighlightedText
+        model={segModel}
+        ranges={ranges}
+        highlights={highlights}
+        selected={selected}
+        onSelect={(i) => {
+          select(i, false);
+          setTab("segments");
+        }}
+      />
+    </TextPanel>
+  );
+
+  const report = (
+    <LayerCard className="min-w-0">
+      <LayerCard.Secondary className="no-print flex items-center gap-2 py-2 pr-2 pl-3">
+        <Tabs
+          variant="underline"
+          value={tab}
+          onValueChange={(t) => {
+            setTab(t as ReportTab);
+            if (t === "segments" && selected < 0 && segments.length) setSelected(0);
+          }}
+          tabs={[
+            { value: "overview", label: "Overview" },
+            { value: "graph", label: "Graph" },
+            { value: "segments", label: "Segments" },
+          ]}
+        />
         <DropdownMenu>
-          <DropdownMenu.Trigger render={<Button size="sm" icon={DownloadSimpleIcon}>Export</Button>} />
+          <DropdownMenu.Trigger
+            render={<Button size="sm" variant="ghost" shape="square" icon={DotsThreeIcon} aria-label="Report actions" className="ml-auto" />}
+          />
           <DropdownMenu.Content align="end">
+            <DropdownMenu.Item icon={ArrowClockwiseIcon} onClick={() => startPangram(doc.id, version.id, prefs.pangramModel)}>
+              Re-check with {prefs.pangramModel} (≈ {usd(pangramCost(prefs.pangramModel, countWords(version.text)))})
+            </DropdownMenu.Item>
+            {dashboard && (
+              <DropdownMenu.LinkItem icon={ArrowSquareOutIcon} href={dashboard} target="_blank">
+                Open in Pangram dashboard
+              </DropdownMenu.LinkItem>
+            )}
+            <DropdownMenu.Separator />
             <DropdownMenu.Item icon={PrinterIcon} onClick={() => exportAs("print")}>
               Print / save as PDF
             </DropdownMenu.Item>
@@ -123,56 +158,31 @@ export function Report({ doc, version, check, model }: { doc: Doc; version: Vers
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu>
-      </div>
-
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <DocumentPane
-          title={`${doc.title} · ${label}`}
-          checkedAt={check.checkedAt}
-          model={segModel}
-          ranges={ranges}
-          counts={stats.segCounts}
-          highlights={highlights}
-          onToggle={(k) => setHighlights({ ...highlights, [k]: !highlights[k] })}
-          selected={selected}
-          onSelect={(i) => {
-            select(i, false);
-            setTab("segments");
-          }}
-        />
-
-        <LayerCard className="min-w-0 xl:sticky xl:top-4">
-          <LayerCard.Secondary className="no-print overflow-x-auto px-3 py-2">
-            <Tabs
-              variant="underline"
-              value={tab}
-              onValueChange={(t) => {
-                setTab(t as ReportTab);
-                if (t === "segments" && selected < 0 && segments.length) setSelected(0);
-              }}
-              tabs={[
-                { value: "overview", label: "Overview" },
-                { value: "graph", label: "Graph" },
-                { value: "segments", label: "Segments" },
-                { value: "versions", label: `Versions · ${doc.versions.length}` },
-              ]}
-            />
-          </LayerCard.Secondary>
-          <LayerCard.Primary className="p-0">
-            {tab === "overview" && <Overview docId={doc.id} version={version} check={check} stats={stats} segments={segments.length} />}
-            {tab === "graph" && <Graph segments={segments} selected={selected} onSelect={select} />}
-            {tab === "segments" && <Segments segments={segments} selected={selected} onSelect={select} filter={filter} onFilter={setFilter} />}
-            {tab === "versions" && (
-              <Versions
-                doc={doc}
-                selectedId={version.id}
-                model={model}
-                onSelect={(versionId) => navigate({ tab: "pangram", docId: doc.id, versionId })}
+      </LayerCard.Secondary>
+      <LayerCard.Primary className="p-0">
+        {job && (
+          <div className="no-print px-5 pt-4">
+            {job.error ? (
+              <Banner
+                size="sm"
+                variant="error"
+                icon={<WarningCircleIcon weight="fill" />}
+                description={`Re-check failed: ${job.error}`}
+                action={<Banner.Action onClick={() => retryJob(doc.id, job.id)}>Retry</Banner.Action>}
               />
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-kumo-subtle">
+                <Loader size="sm" /> Re-checking · {STAGE_LABELS[job.status] ?? "Working…"}
+              </div>
             )}
-          </LayerCard.Primary>
-        </LayerCard>
-      </div>
-    </div>
+          </div>
+        )}
+        {tab === "overview" && <Overview docId={doc.id} version={version} check={check} stats={stats} segments={segments.length} />}
+        {tab === "graph" && <Graph segments={segments} selected={selected} onSelect={select} />}
+        {tab === "segments" && <Segments segments={segments} selected={selected} onSelect={select} filter={filter} onFilter={setFilter} />}
+      </LayerCard.Primary>
+    </LayerCard>
   );
+
+  return <Columns text={text} side={report} />;
 }

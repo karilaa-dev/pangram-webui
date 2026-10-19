@@ -1,7 +1,7 @@
 import { HttpError, api } from "./api";
 import { countWords } from "./format";
 import { humanizeCost, pangramCost } from "./pricing";
-import { observable, store, toasts, versionLabel } from "./store";
+import { store, toasts, versionLabel } from "./store";
 import type { Doc, HumanizeJob, HumanizeSettings, Job, PangramJob, Version } from "./types";
 
 // Humanize runs and Pangram checks are asynchronous on both APIs. Jobs are
@@ -13,15 +13,6 @@ const HUMANIZE_TIMEOUT_MS = 20 * 60 * 1000;
 const PANGRAM_POLL_MS = 1500;
 const PANGRAM_TIMEOUT_MS = 6 * 60 * 1000;
 const MAX_TRANSIENT_FAILURES = 5;
-
-export const credits = observable<number | null>(null);
-
-export function refreshCredits() {
-  api
-    .balance()
-    .then((b) => credits.set(b.credits))
-    .catch(() => {});
-}
 
 type VersionListener = (docId: string, versionId: string) => void;
 const versionListeners = new Set<VersionListener>();
@@ -115,15 +106,13 @@ async function runHumanize(docId: string, job: HumanizeJob) {
     text,
     createdAt: Date.now(),
     sourceId: job.sourceId,
-    humanize: { runId, settings: job.settings, score: run.score, creditsSpent: run.creditsSpent, costUsd },
+    humanize: { runId, settings: job.settings, score: run.score, costUsd },
   };
   store.update(docId, (d) => ({
     ...removeJob(d, job.id),
     versions: [...d.versions, version],
     spentUsd: (d.spentUsd ?? 0) + costUsd,
   }));
-  if (run.remainingCredits !== null) credits.set(run.remainingCredits);
-  else refreshCredits();
 
   const doc = store.get(docId)!;
   toasts.add({ title: `${versionLabel(doc, version)} is ready`, description: doc.title, variant: "success" });

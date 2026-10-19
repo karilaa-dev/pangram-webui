@@ -41,8 +41,6 @@ export interface HumanizeRun {
   done: boolean;
   text: string | null;
   score: number | null;
-  creditsSpent: number | null;
-  remainingCredits: number | null;
   error: string | null;
 }
 
@@ -63,5 +61,4 @@ export const api = {
   humanizeStart: (text: string, settings: HumanizeSettings, idempotencyKey: string) =>
     post<HumanizeRun>("/api/humanizer/runs", { text, ...settings, idempotencyKey }),
   humanizeRun: (runId: string) => request<HumanizeRun>(`/api/humanizer/runs/${encodeURIComponent(runId)}`),
-  balance: () => request<{ credits: number | null }>("/api/humanizer/balance"),
 };

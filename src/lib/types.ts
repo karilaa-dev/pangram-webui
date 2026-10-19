@@ -62,7 +62,6 @@ export interface Version {
     settings: HumanizeSettings;
     /** StealthGPT human-likeness score, 0–100 (higher reads more human). */
     score: number | null;
-    creditsSpent: number | null;
     /** Estimated USD cost of the run (input + output words), at the rate configured when it ran. */
     costUsd?: number;
   };

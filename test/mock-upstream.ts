@@ -88,7 +88,6 @@ function humanize(text: string) {
 export function startMockUpstream(port = 0) {
   const tasks = new Map<string, { text: string; polls: number }>();
   const runs = new Map<string, { text: string; polls: number }>();
-  let credits = 5000;
   let counter = 0;
   const state = { pangramSubmits: 0, stealthStarts: 0, idempotencyKeys: [] as string[] };
 
@@ -170,20 +169,13 @@ export function startMockUpstream(port = 0) {
           const polls = run.polls++;
           if (polls < 1) return Response.json({ runId: req.params.id, status: "queued" });
           if (polls < 2) return Response.json({ runId: req.params.id, status: "running" });
-          if (polls === 2) credits -= Math.ceil(run.text.length / 10);
           return Response.json({
             runId: req.params.id,
             status: "completed",
             result: humanize(run.text),
             howLikelyToBeDetected: 70 + (hash(run.text) % 30),
-            creditsSpent: Math.ceil(run.text.length / 10),
-            remainingCredits: credits,
-            billingMode: "credits",
           });
         },
-      },
-      "/api/stealthify/balance": {
-        GET: (req) => stealthAuth(req) ?? Response.json({ remainingCredits: credits }),
       },
     },
   });

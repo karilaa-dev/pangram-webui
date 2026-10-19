@@ -104,8 +104,6 @@ export function Overview({
       <Section title="Text statistics">
         <div className="grid grid-cols-2 gap-2">
           {[
-            ["Words", num(stats.words)],
-            ["Characters", num(stats.chars)],
             ["Segments", num(segments)],
             ["Tokens", num(stats.tokens)],
             ["Avg AI assistance", pct(stats.weightedScore)],
