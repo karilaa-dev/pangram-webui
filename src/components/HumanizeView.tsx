@@ -27,9 +27,11 @@ import {
   usePreferences,
   type Preferences,
 } from "../lib/settings";
+import { humanizeRate, usd } from "../lib/pricing";
 import { KIND_LABELS, store, useDoc, versionLabel } from "../lib/store";
 import type { Doc, Services, Version } from "../lib/types";
 import { Composer } from "./Composer";
+import { CostEstimate, versionCosts } from "./Cost";
 import { DocHeader } from "./DocHeader";
 import { ModelSelect } from "./ModelSelect";
 import { CopyButton, PageHeading, SectionTitle, Swatch, VerdictBadge } from "./common";
@@ -52,6 +54,17 @@ function MissingKey({ name, what }: { name: string; what: string }) {
     />
   );
 }
+
+// Each option shows its price; the closed select shows just the name.
+const MODEL_ITEMS = Object.entries(HUMANIZER_MODELS).map(([value, name]) => ({
+  value,
+  label: (
+    <span className="flex w-full items-center justify-between gap-4">
+      {name}
+      <span className="text-xs text-kumo-subtle">{humanizeRate(value)}</span>
+    </span>
+  ),
+}));
 
 function SettingsFields({
   prefs,
@@ -80,7 +93,8 @@ function SettingsFields({
         className={fill ? "w-full" : "w-36"}
         value={prefs.model}
         onValueChange={(v) => setPrefs({ ...prefs, model: v as string })}
-        items={HUMANIZER_MODELS}
+        items={MODEL_ITEMS}
+        renderValue={(v) => HUMANIZER_MODELS[v as keyof typeof HUMANIZER_MODELS] ?? v}
       />
       <Select
         label="Output"
@@ -137,6 +151,13 @@ function NewHumanize({ services }: { services: Services }) {
               />
             </div>
             <div className="flex-1" />
+            <div className="flex h-9 items-center">
+              <CostEstimate
+                words={countWords(text)}
+                humanizeModel={prefs.model}
+                pangramModel={prefs.thenCheck && services.pangram ? prefs.pangramModel : undefined}
+              />
+            </div>
             <Button variant="primary" icon={MagicWandIcon} disabled={!text.trim() || !services.humanizer} onClick={submit}>
               Humanize
             </Button>
@@ -310,6 +331,13 @@ function HumanizeCard({ doc, version, services }: { doc: Doc; version: Version; 
                 ? `${running} run${running === 1 ? "" : "s"} in progress from ${label}.`
                 : "Creates a new version. Uses StealthGPT credits."}
             </p>
+            <div>
+              <CostEstimate
+                words={countWords(version.text)}
+                humanizeModel={prefs.model}
+                pangramModel={prefs.thenCheck && services.pangram ? prefs.pangramModel : undefined}
+              />
+            </div>
           </>
         )}
       </LayerCard.Primary>
@@ -371,6 +399,9 @@ function PangramCard({ doc, version, services }: { doc: Doc; version: Version; s
             Re-check
           </Button>
         </div>
+        <div>
+          <CostEstimate words={countWords(version.text)} pangramModel={prefs.pangramModel} label="Re-check" />
+        </div>
       </div>
     );
   } else {
@@ -399,6 +430,9 @@ function PangramCard({ doc, version, services }: { doc: Doc; version: Version; s
             Check with Pangram
           </Button>
         </div>
+        <div>
+          <CostEstimate words={countWords(version.text)} pangramModel={prefs.pangramModel} />
+        </div>
       </div>
     );
   }
@@ -416,6 +450,7 @@ function PangramCard({ doc, version, services }: { doc: Doc; version: Version; s
 }
 
 function DetailsCard({ doc, version }: { doc: Doc; version: Version }) {
+  const costs = versionCosts(doc, version);
   const h = version.humanize;
   const source = version.sourceId ? doc.versions.find((v) => v.id === version.sourceId) : undefined;
   const rows: [string, string][] = [
@@ -431,6 +466,8 @@ function DetailsCard({ doc, version }: { doc: Doc; version: Version }) {
     ]);
     if (h.creditsSpent !== null) rows.push(["Credits spent", num(h.creditsSpent)]);
   }
+  if (costs.humanize) rows.push(["Humanize cost", `≈ ${usd(costs.humanize)}`]);
+  if (costs.pangram) rows.push(["Pangram check cost", `≈ ${usd(costs.pangram)}`]);
 
   return (
     <LayerCard>

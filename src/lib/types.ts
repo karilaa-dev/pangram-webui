@@ -4,7 +4,7 @@ export type VersionKind = "original" | "humanized" | "edited";
 
 export interface HumanizeSettings {
   qualityMode: "quality" | "fast";
-  /** "default" lets StealthGPT pick its own model. */
+  /** StealthGPT model: "lite", "standard" or "super". */
   model: string;
   outputFormat: "text" | "markdown";
 }
@@ -46,6 +46,8 @@ export interface PangramCheck {
   model: string;
   checkedAt: number;
   result: PangramResult;
+  /** Estimated USD cost of this check, at the rate configured when it ran. */
+  costUsd?: number;
 }
 
 export interface Version {
@@ -61,6 +63,8 @@ export interface Version {
     /** StealthGPT human-likeness score, 0–100 (higher reads more human). */
     score: number | null;
     creditsSpent: number | null;
+    /** Estimated USD cost of the run (input + output words), at the rate configured when it ran. */
+    costUsd?: number;
   };
   pangram?: PangramCheck;
   plagiarism?: Record<string, any>;
@@ -101,6 +105,8 @@ export interface Doc {
   jobs: Job[];
   tags: string[];
   notes: string;
+  /** Estimated USD spent on this document, including re-checks. */
+  spentUsd?: number;
 }
 
 export interface Services {

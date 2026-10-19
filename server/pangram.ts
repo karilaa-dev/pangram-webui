@@ -13,15 +13,19 @@ export function pangramClient(config: Config["pangram"]) {
   }
 
   return {
+    // Named models only (no "default" alias), oldest first.
     async models(): Promise<string[]> {
       try {
         const data = await call(`${config.apiUrl}/models`);
-        return Array.isArray(data?.models) && data.models.length ? data.models : ["default"];
+        const models = (Array.isArray(data?.models) ? data.models : []).filter(
+          (m: unknown): m is string => typeof m === "string" && !!m && m !== "default",
+        );
+        if (models.length) return models.sort((a: string, b: string) => a.localeCompare(b, undefined, { numeric: true }));
       } catch (error) {
-        // Model listing is optional; fall back to the default selector.
         console.error("Could not list Pangram models:", (error as Error).message);
-        return ["default"];
       }
+      // Model listing is optional; fall back to the current model.
+      return ["pangram-4"];
     },
 
     // Submit an async detection task; the browser polls `task()` until it settles.

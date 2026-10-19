@@ -61,12 +61,7 @@ export const api = {
   plagiarism: (text: string) => post<Record<string, any>>("/api/pangram/plagiarism", { text }),
 
   humanizeStart: (text: string, settings: HumanizeSettings, idempotencyKey: string) =>
-    post<HumanizeRun>("/api/humanizer/runs", {
-      text,
-      ...settings,
-      model: settings.model === "default" ? undefined : settings.model,
-      idempotencyKey,
-    }),
+    post<HumanizeRun>("/api/humanizer/runs", { text, ...settings, idempotencyKey }),
   humanizeRun: (runId: string) => request<HumanizeRun>(`/api/humanizer/runs/${encodeURIComponent(runId)}`),
   balance: () => request<{ credits: number | null }>("/api/humanizer/balance"),
 };

@@ -34,18 +34,16 @@ export function createRoutes(config: Config) {
       }
     };
 
-  const services = () => ({
-    pangram: !!config.pangram.apiKey,
-    humanizer: !!config.stealth.apiKey,
+  const session = () => ({
+    authenticated: true,
+    services: { pangram: !!config.pangram.apiKey, humanizer: !!config.stealth.apiKey },
   });
 
   return {
     "/api/auth/session": {
       GET: (req: Request) =>
         Response.json(
-          isAuthorized(req, config.adminKey)
-            ? { authenticated: true, services: services() }
-            : { authenticated: false },
+          isAuthorized(req, config.adminKey) ? session() : { authenticated: false },
         ),
     },
 
@@ -67,10 +65,9 @@ export function createRoutes(config: Config) {
         }
         throttle.reset(address);
         const token = createSessionToken(config.adminKey);
-        return Response.json(
-          { authenticated: true, services: services() },
-          { headers: { "Set-Cookie": sessionCookie(req, token, SESSION_TTL_SECONDS) } },
-        );
+        return Response.json(session(), {
+          headers: { "Set-Cookie": sessionCookie(req, token, SESSION_TTL_SECONDS) },
+        });
       },
     },
 
@@ -87,7 +84,7 @@ export function createRoutes(config: Config) {
       POST: guard(async (req) => {
         const body = await readJson(req);
         const text = readText(body);
-        const model = typeof body.model === "string" && body.model.trim() ? body.model.trim() : "default";
+        const model = typeof body.model === "string" && body.model.trim() ? body.model.trim() : "pangram-4";
         return Response.json({ ...(await pangram.submit(text, model)), model });
       }),
     },

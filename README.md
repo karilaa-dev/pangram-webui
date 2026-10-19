@@ -5,7 +5,7 @@ A private admin panel for humanizing text with [StealthGPT](https://www.stealthg
 ## Features
 
 - **Two tabs, usable on their own or together.**
-  - **Humanize**: paste text, pick StealthGPT's quality mode, model and output format, and humanize. Re-humanize any version, or edit one by hand. Every edit is saved as a new version.
+  - **Humanize**: paste text, pick StealthGPT's quality mode (Fast or Quality), model (Lite, Standard or Super) and output format, and humanize. Re-humanize any version, or edit one by hand. Every edit is saved as a new version.
   - **Pangram check**: paste text for a full Pangram report, or check any version of a document.
   - **In sequence**: after humanizing, one **Check with Pangram** click checks the new version. Turn on *Then check with Pangram* to have each rewrite checked automatically.
 - **Every version is kept.** A document holds the original text plus every humanized or edited version. Versions never change after they are created. Each one keeps its own StealthGPT human score, settings, credits spent, Pangram result and plagiarism result.
@@ -19,6 +19,7 @@ A private admin panel for humanizing text with [StealthGPT](https://www.stealthg
   - Export by printing to PDF, as a copied summary, as CSV, or as JSON.
 - **Long runs are safe.** Humanize runs and Pangram checks are stored with their run/task id. They resume after a page reload instead of losing a result you paid for. Each humanize run sends an idempotency key, so a retry never charges twice.
 - **Protected by an admin API key.** All API routes need a session or the key itself (see [Security](#security)).
+- **Cost estimates.** Before each humanize run or Pangram check, ZamWriter shows its estimated price. Each version records what its run and check cost, each document shows its running total, and the header shows your remaining StealthGPT credits (see [Pricing](#pricing)).
 - Organize documents with titles, tags and notes, and search across all of them. Light and dark themes, and a responsive layout.
 
 ## Setup
@@ -48,6 +49,36 @@ Open http://localhost:3000 and sign in with your `ADMIN_API_KEY`.
 | `STEALTHGPT_API_URL` | `https://www.stealthgpt.ai` | StealthGPT API base URL |
 
 Bun loads `.env` automatically.
+
+## Pricing
+
+Both APIs bill per word. ZamWriter estimates each action's price from the published API rates and the model you pick:
+
+| Action | Model | Rate | How it's counted |
+| --- | --- | --- | --- |
+| Humanize (StealthGPT) | Lite, Standard | $0.20 per 1,000 words | Input **plus** output words |
+| Humanize (StealthGPT) | Super | $0.05 per 100 words ($0.50 per 1,000) | Input **plus** output words |
+| Pangram check | Pangram 4 | $0.05 per 100 words | Words in the checked version, rounded up to the next 100 |
+| Pangram check | Pangram 3 (legacy) | $0.05 per 1,000 words | Rounded up to the next 1,000 |
+
+For example, a 412-word text costs:
+
+- **Lite or Standard:** about $0.16 to humanize (≈ 824 words in + out).
+- **Super:** about $0.41 to humanize.
+- **Pangram 4:** $0.25 to check (5 × 100-word blocks).
+
+How the numbers are worked out:
+
+- **Estimates use your current choices.** Before a run, the humanize estimate assumes the rewrite is about as long as the input. Each model option shows its rate in the dropdown.
+- **Costs are recorded per run.** After a run, ZamWriter records its cost from the actual input and output word counts. It also shows the credits StealthGPT reports spending.
+- **Totals include re-checks.** Each document shows a running total that counts re-checks too.
+- **Not covered:** Plagiarism checks are billed separately by Pangram. StealthGPT's starter pack, $100 for 500,000 words, isn't factored in either.
+
+The rates are hard-coded in [`src/lib/pricing.ts`](src/lib/pricing.ts).
+
+## Settings
+
+The quality mode, model, output format and Pangram model selects have no "default" option. The first time, they start on the lowest option: Fast, Lite, plain text, and the oldest Pangram model the API lists. After that, ZamWriter remembers your latest choice in this browser.
 
 ## Security
 

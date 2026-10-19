@@ -5,13 +5,15 @@ import { ApiError, upstreamFetch } from "./http";
 // run, GET /api/stealthify/runs/:id reports queued → running → completed.
 export const QUALITY_MODES = ["quality", "fast"] as const;
 export const OUTPUT_FORMATS = ["text", "markdown"] as const;
+// The API has no default model; omitting it is a 400.
+export const MODELS = ["lite", "standard", "super"] as const;
 const TERMINAL = new Set(["completed", "failed", "cancelled"]);
 
 export interface HumanizeRequest {
   text: string;
   qualityMode: (typeof QUALITY_MODES)[number];
   outputFormat: (typeof OUTPUT_FORMATS)[number];
-  model?: string;
+  model: (typeof MODELS)[number];
   idempotencyKey?: string;
 }
 
@@ -65,10 +67,8 @@ export function parseHumanizeRequest(body: Record<string, unknown>, text: string
   if (!QUALITY_MODES.includes(qualityMode as any)) throw new ApiError("Invalid qualityMode", 400);
   if (!OUTPUT_FORMATS.includes(outputFormat as any)) throw new ApiError("Invalid outputFormat", 400);
 
-  const model = typeof body.model === "string" && body.model ? body.model : undefined;
-  if (model !== undefined && !/^[a-z0-9_-]{1,32}$/i.test(model)) {
-    throw new ApiError("Invalid model", 400);
-  }
+  const model = body.model;
+  if (!MODELS.includes(model as any)) throw new ApiError(`model must be one of: ${MODELS.join(", ")}`, 400);
   const key = body.idempotencyKey;
   if (key !== undefined && (typeof key !== "string" || key.length < 1 || key.length > 255)) {
     throw new ApiError("Invalid idempotencyKey", 400);
@@ -77,7 +77,7 @@ export function parseHumanizeRequest(body: Record<string, unknown>, text: string
     text,
     qualityMode: qualityMode as HumanizeRequest["qualityMode"],
     outputFormat: outputFormat as HumanizeRequest["outputFormat"],
-    model,
+    model: model as HumanizeRequest["model"],
     idempotencyKey: key as string | undefined,
   };
 }

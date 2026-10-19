@@ -45,6 +45,7 @@ describe("config", () => {
     expect(() => loadConfig({})).toThrow("ADMIN_API_KEY");
     expect(() => loadConfig({ ADMIN_API_KEY: "   " })).toThrow("ADMIN_API_KEY");
   });
+
 });
 
 describe("normalizeRun", () => {
@@ -177,9 +178,18 @@ describe("HTTP API", () => {
     const res = await fetch(`${base}/api/humanizer/runs`, {
       method: "POST",
       headers: bearer,
-      body: JSON.stringify({ text: "Hello", qualityMode: "ultra" }),
+      body: JSON.stringify({ text: "Hello", qualityMode: "ultra", model: "lite" }),
     });
     expect(res.status).toBe(400);
+    for (const model of [undefined, "default", "heavy"]) {
+      const bad = await fetch(`${base}/api/humanizer/runs`, {
+        method: "POST",
+        headers: bearer,
+        body: JSON.stringify({ text: "Hello", model }),
+      });
+      expect(bad.status).toBe(400);
+      expect(((await bad.json()) as any).error).toContain("model must be one of");
+    }
     const empty = await fetch(`${base}/api/humanizer/runs`, {
       method: "POST",
       headers: bearer,
@@ -201,6 +211,11 @@ describe("HTTP API", () => {
     expect(data.stage).toBe("STAGE_SUCCESS");
     expect(data.result.task_id).toBe(taskId);
     expect(data.result.windows.length).toBeGreaterThan(0);
+  });
+
+  test("model list drops the default alias and sorts oldest first", async () => {
+    const res: any = await (await fetch(`${base}/api/pangram/models`, { headers: bearer })).json();
+    expect(res.models).toEqual(["pangram-3", "pangram-4"]);
   });
 
   test("balance and plagiarism proxy through", async () => {

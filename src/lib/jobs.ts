@@ -1,4 +1,6 @@
 import { HttpError, api } from "./api";
+import { countWords } from "./format";
+import { humanizeCost, pangramCost } from "./pricing";
 import { observable, store, toasts, versionLabel } from "./store";
 import type { Doc, HumanizeJob, HumanizeSettings, Job, PangramJob, Version } from "./types";
 
@@ -105,15 +107,21 @@ async function runHumanize(docId: string, job: HumanizeJob) {
   if (!run) return;
   if (run.status !== "completed" || run.text === null) throw new RunFailed(run.error || `Run ${run.status}`);
 
+  const text = run.text.trim();
+  const costUsd = humanizeCost(job.settings.model, countWords(source.text), countWords(text));
   const version: Version = {
     id: crypto.randomUUID(),
     kind: "humanized",
-    text: run.text.trim(),
+    text,
     createdAt: Date.now(),
     sourceId: job.sourceId,
-    humanize: { runId, settings: job.settings, score: run.score, creditsSpent: run.creditsSpent },
+    humanize: { runId, settings: job.settings, score: run.score, creditsSpent: run.creditsSpent, costUsd },
   };
-  store.update(docId, (d) => ({ ...removeJob(d, job.id), versions: [...d.versions, version] }));
+  store.update(docId, (d) => ({
+    ...removeJob(d, job.id),
+    versions: [...d.versions, version],
+    spentUsd: (d.spentUsd ?? 0) + costUsd,
+  }));
   if (run.remainingCredits !== null) credits.set(run.remainingCredits);
   else refreshCredits();
 
@@ -147,10 +155,12 @@ async function runPangram(docId: string, job: PangramJob) {
   if (!task) return;
   if (task.error || !task.result) throw new RunFailed(task.error || "Pangram returned no result");
 
-  const check = { model: job.model, checkedAt: Date.now(), result: { ...task.result, model: job.model } };
+  const costUsd = pangramCost(job.model, countWords(version.text));
+  const check = { model: job.model, checkedAt: Date.now(), result: { ...task.result, model: job.model }, costUsd };
   store.update(docId, (d) => ({
     ...removeJob(d, job.id),
     versions: d.versions.map((v) => (v.id === job.versionId ? { ...v, pangram: check } : v)),
+    spentUsd: (d.spentUsd ?? 0) + costUsd,
   }));
   const doc = store.get(docId)!;
   toasts.add({

@@ -3,9 +3,11 @@ import { Loader } from "@cloudflare/kumo/components/loader";
 import { Table } from "@cloudflare/kumo/components/table";
 import { countWords, num, pct } from "../../lib/format";
 import { pangramJobFor, startPangram } from "../../lib/jobs";
+import { pangramCost, usd } from "../../lib/pricing";
 import { KIND_LABELS, versionLabel } from "../../lib/store";
 import type { Doc } from "../../lib/types";
 import { VerdictBadge } from "../common";
+import { versionCosts } from "../Cost";
 
 /** Every version of the document side by side: StealthGPT score and Pangram result. */
 export function Versions({
@@ -20,6 +22,7 @@ export function Versions({
   model: string;
 }) {
   const unchecked = doc.versions.filter((v) => !v.pangram && !pangramJobFor(doc, v.id));
+  const checkAllCost = unchecked.reduce((a, v) => a + pangramCost(model, countWords(v.text)), 0);
 
   return (
     <div className="py-4">
@@ -32,6 +35,9 @@ export function Versions({
               <Table.Head>Pangram</Table.Head>
               <Table.Head className="text-right">AI</Table.Head>
               <Table.Head className="text-right">Human</Table.Head>
+              <Table.Head className="text-right" title="Humanize run + Pangram check, estimated">
+                Cost
+              </Table.Head>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -63,6 +69,7 @@ export function Versions({
                   </Table.Cell>
                   <Table.Cell className="text-right">{r ? pct((r.fraction_ai || 0) + (r.fraction_ai_assisted || 0)) : "—"}</Table.Cell>
                   <Table.Cell className="text-right">{r ? pct(r.fraction_human) : "—"}</Table.Cell>
+                  <Table.Cell className="text-right">{costLabel(versionCosts(doc, v))}</Table.Cell>
                 </Table.Row>
               );
             })}
@@ -71,14 +78,21 @@ export function Versions({
       </div>
       <p className="mt-3 px-5 text-xs text-kumo-subtle">
         AI = AI-generated + AI-assisted share. Score is StealthGPT's human-likeness estimate (0–100, higher reads more human).
+        Cost is the estimated humanize run plus Pangram check for that version.
       </p>
       {unchecked.length > 0 && (
         <div className="no-print mt-3 px-5">
           <Button size="sm" onClick={() => unchecked.forEach((v) => startPangram(doc.id, v.id, model))}>
             Check {unchecked.length} unchecked version{unchecked.length === 1 ? "" : "s"}
+            {checkAllCost > 0 && ` (≈ ${usd(checkAllCost)})`}
           </Button>
         </div>
       )}
     </div>
   );
+}
+
+function costLabel({ humanize, pangram }: { humanize?: number; pangram?: number }) {
+  const total = (humanize ?? 0) + (pangram ?? 0);
+  return total > 0 ? usd(total) : "—";
 }

@@ -104,7 +104,7 @@ export function startMockUpstream(port = 0) {
   const server = Bun.serve({
     port,
     routes: {
-      "/pangram/models": { GET: (req) => pangramAuth(req) ?? Response.json({ models: ["default", "pangram-4"] }) },
+      "/pangram/models": { GET: (req) => pangramAuth(req) ?? Response.json({ models: ["default", "pangram-4", "pangram-3"] }) },
       "/pangram/task": {
         POST: async (req) => {
           const denied = pangramAuth(req);
@@ -145,8 +145,11 @@ export function startMockUpstream(port = 0) {
         POST: async (req) => {
           const denied = stealthAuth(req);
           if (denied) return denied;
-          const body = (await req.json()) as { text: string };
+          const body = (await req.json()) as { text: string; model?: string };
           if (!body.text) return Response.json({ message: "text is required" }, { status: 400 });
+          if (!["super", "standard", "lite"].includes(body.model ?? "")) {
+            return Response.json({ message: 'model is required: pass "super", "standard", or "lite"' }, { status: 400 });
+          }
           const key = req.headers.get("idempotency-key");
           if (key) state.idempotencyKeys.push(key);
           const runId = `hum_${++counter}`;

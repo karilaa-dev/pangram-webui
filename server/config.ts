@@ -17,6 +17,7 @@ type Env = Record<string, string | undefined>;
 const trimmed = (value: string | undefined) => value?.trim() || undefined;
 const stripSlash = (url: string) => url.replace(/\/+$/, "");
 
+
 export function loadConfig(env: Env = process.env): Config {
   const adminKey = trimmed(env.ADMIN_API_KEY);
   if (!adminKey) {

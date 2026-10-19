@@ -5,7 +5,7 @@ import { LayerCard } from "@cloudflare/kumo/components/layer-card";
 import { Loader } from "@cloudflare/kumo/components/loader";
 import { ScanIcon, WarningCircleIcon, WarningIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
-import { titleFromText } from "../lib/format";
+import { countWords, titleFromText } from "../lib/format";
 import { STAGE_LABELS, pangramJobFor, retryJob, startPangram } from "../lib/jobs";
 import { LABELS } from "../lib/pangram";
 import { navigate, type Route } from "../lib/router";
@@ -13,6 +13,7 @@ import { usePreferences } from "../lib/settings";
 import { store, useDoc, versionLabel } from "../lib/store";
 import type { Doc, Services, Version } from "../lib/types";
 import { Composer } from "./Composer";
+import { CostEstimate } from "./Cost";
 import { DocHeader } from "./DocHeader";
 import { ModelSelect } from "./ModelSelect";
 import { PageHeading, Swatch } from "./common";
@@ -74,6 +75,9 @@ function NewCheck({ services }: { services: Services }) {
           <>
             <ModelSelect />
             <div className="flex-1" />
+            <div className="flex h-9 items-center">
+              <CostEstimate words={countWords(text)} pangramModel={prefs.pangramModel} />
+            </div>
             <Button variant="primary" icon={ScanIcon} disabled={!text.trim() || !services.pangram} onClick={submit}>
               Check for AI
             </Button>
@@ -130,15 +134,18 @@ function DocCheck({ doc, selected, services }: { doc: Doc; selected: Version; se
             description={job?.error ?? "Run a Pangram check to see which parts of this version read as AI-generated, AI-assisted or human."}
             contents={
               services.pangram ? (
-                <div className="flex items-end gap-2">
-                  <ModelSelect />
-                  <Button
-                    variant="primary"
-                    icon={ScanIcon}
-                    onClick={() => (job?.error ? retryJob(doc.id, job.id) : startPangram(doc.id, selected.id, prefs.pangramModel))}
-                  >
-                    {job?.error ? "Retry" : `Check ${label}`}
-                  </Button>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-end gap-2">
+                    <ModelSelect />
+                    <Button
+                      variant="primary"
+                      icon={ScanIcon}
+                      onClick={() => (job?.error ? retryJob(doc.id, job.id) : startPangram(doc.id, selected.id, prefs.pangramModel))}
+                    >
+                      {job?.error ? "Retry" : `Check ${label}`}
+                    </Button>
+                  </div>
+                  <CostEstimate words={countWords(selected.text)} pangramModel={prefs.pangramModel} />
                 </div>
               ) : (
                 <MissingPangram />

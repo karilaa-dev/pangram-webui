@@ -6,6 +6,7 @@ import { TagInput } from "@cloudflare/kumo/components/tag-input";
 import { DotsThreeIcon, DownloadSimpleIcon, NotePencilIcon, TrashIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { download, formatDate } from "../lib/format";
+import { usd } from "../lib/pricing";
 import { navigate } from "../lib/router";
 import { store } from "../lib/store";
 import type { Doc, Tab } from "../lib/types";
@@ -29,6 +30,12 @@ export function DocHeader({ doc, tab }: { doc: Doc; tab: Tab }) {
           <span>
             {humanized} rewrite{humanized === 1 ? "" : "s"}, {checked} Pangram check{checked === 1 ? "" : "s"}
           </span>
+          {!!doc.spentUsd && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span title="Estimated from the configured rates, including re-checks">≈ {usd(doc.spentUsd)} spent</span>
+            </>
+          )}
           {doc.tags.map((t) => (
             <span key={t} className="rounded bg-kumo-recessed px-1.5 py-px text-[11px]">
               {t}

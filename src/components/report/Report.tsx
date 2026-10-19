@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { download, formatRelativeTime, safeUrl } from "../../lib/format";
 import { startPangram } from "../../lib/jobs";
 import { buildSegments, computeStats, plagRanges, segmentsCsv, summaryText, type SegClass } from "../../lib/pangram";
+import { usd } from "../../lib/pricing";
 import { navigate } from "../../lib/router";
 import { toasts, versionLabel } from "../../lib/store";
 import type { Doc, PangramCheck, Version } from "../../lib/types";
@@ -88,6 +89,7 @@ export function Report({ doc, version, check, model }: { doc: Doc; version: Vers
           <VerdictBadge result={check.result} />
           <span className="truncate">
             {label} checked {formatRelativeTime(check.checkedAt).toLowerCase()} with <b className="font-medium text-kumo-default">{check.model}</b>
+            {!!check.costUsd && ` · ≈ ${usd(check.costUsd)}`}
           </span>
         </div>
         <Button size="sm" icon={ArrowClockwiseIcon} onClick={() => startPangram(doc.id, version.id, model)}>
