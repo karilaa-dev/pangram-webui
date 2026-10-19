@@ -8,7 +8,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap"
+            href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
             rel="stylesheet"
         />
         <script>
@@ -20,38 +20,39 @@
         </script>
         <style>
             :root {
-                --bg: #ffffff;
-                --bg-subtle: #f7f7f4;
-                --bg-muted: #efefea;
+                --bg: #f8f7f5;
+                --bg-subtle: #f1efeb;
+                --bg-muted: #e9e6e0;
                 --surface: #ffffff;
-                --border: #e5e5df;
-                --border-strong: #d3d3cb;
+                --border: #e4e0d8;
+                --border-strong: #d2cdc3;
                 --text: #14201e;
-                --text-2: #46514f;
-                --text-3: #7a8381;
-                --accent: #d17a01;
-                --accent-strong: #a96200;
-                --accent-soft: rgba(209, 122, 1, 0.1);
+                --text-2: #3f4b49;
+                --text-3: #64748b;
+                --accent: #15502e;
+                --accent-strong: #0e3b21;
+                --accent-soft: rgba(21, 80, 46, 0.09);
                 --on-accent: #ffffff;
+                --cta: #ff5e00;
+                --cta-strong: #e65300;
+                --on-cta: #ffffff;
                 --ink: #14201e;
                 --on-ink: #ffffff;
 
-                --ai: #e0512a;
-                --ai-bg: rgba(240, 98, 56, 0.2);
-                --ai-bg-strong: rgba(240, 98, 56, 0.34);
-                --assisted: #c28a00;
-                --assisted-bg: rgba(245, 190, 30, 0.28);
-                --assisted-bg-strong: rgba(245, 190, 30, 0.45);
-                --assisted-text: #8a6200;
-                --human: #2e8a66;
-                --human-bg: rgba(46, 138, 102, 0.1);
-                --human-bg-strong: rgba(46, 138, 102, 0.22);
-                --plag: #6d5bd0;
-                --plag-bg: rgba(109, 91, 208, 0.16);
+                --ai: #ff5e00;
+                --ai-bg: rgba(255, 94, 0, 0.15);
+                --ai-bg-strong: rgba(255, 94, 0, 0.28);
+                --assisted: #e3b400;
+                --assisted-bg: rgba(255, 231, 130, 0.7);
+                --assisted-bg-strong: rgba(255, 214, 64, 0.85);
+                --assisted-text: #7a5c00;
+                --human: #15502e;
+                --human-bg: rgba(21, 80, 46, 0.08);
+                --human-bg-strong: rgba(21, 80, 46, 0.18);
+                --plag: #4a62d8;
+                --plag-bg: rgba(74, 98, 216, 0.14);
 
                 --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
-                --font-serif: "Instrument Serif", Georgia, serif;
-                --font-mono: "IBM Plex Mono", ui-monospace, monospace;
                 --radius-lg: 14px;
                 --radius: 10px;
                 --radius-sm: 6px;
@@ -65,33 +66,36 @@
 
             @media (prefers-color-scheme: dark) {
                 :root:not([data-theme="light"]) {
-                    --bg: #0e1413;
-                    --bg-subtle: #131b19;
-                    --bg-muted: #1a2421;
-                    --surface: #141c1a;
-                    --border: #24302d;
-                    --border-strong: #33413d;
-                    --text: #ecf0ee;
-                    --text-2: #b4bdba;
-                    --text-3: #7f8a87;
-                    --accent: #f0a033;
-                    --accent-strong: #ffb655;
-                    --accent-soft: rgba(240, 160, 51, 0.14);
-                    --on-accent: #1a1204;
-                    --ink: #ecf0ee;
-                    --on-ink: #0e1413;
-                    --ai: #ff7a52;
-                    --ai-bg: rgba(255, 110, 70, 0.16);
-                    --ai-bg-strong: rgba(255, 110, 70, 0.3);
-                    --assisted: #f2c230;
-                    --assisted-bg: rgba(242, 194, 48, 0.2);
-                    --assisted-bg-strong: rgba(242, 194, 48, 0.36);
-                    --assisted-text: #f2c230;
-                    --human: #4fc193;
-                    --human-bg: rgba(79, 193, 147, 0.1);
-                    --human-bg-strong: rgba(79, 193, 147, 0.24);
-                    --plag: #a596ff;
-                    --plag-bg: rgba(165, 150, 255, 0.2);
+                    --bg: #0f1714;
+                    --bg-subtle: #131d19;
+                    --bg-muted: #1b2622;
+                    --surface: #16201c;
+                    --border: #25322d;
+                    --border-strong: #34433d;
+                    --text: #eef0ec;
+                    --text-2: #b6beba;
+                    --text-3: #8a96a3;
+                    --accent: #3fae6e;
+                    --accent-strong: #5cc285;
+                    --accent-soft: rgba(63, 174, 110, 0.14);
+                    --on-accent: #0b1410;
+                    --cta: #ff6a14;
+                    --cta-strong: #ff8a45;
+                    --on-cta: #ffffff;
+                    --ink: #eef0ec;
+                    --on-ink: #0f1714;
+                    --ai: #ff7a33;
+                    --ai-bg: rgba(255, 106, 20, 0.18);
+                    --ai-bg-strong: rgba(255, 106, 20, 0.32);
+                    --assisted: #ffd84a;
+                    --assisted-bg: rgba(255, 216, 74, 0.16);
+                    --assisted-bg-strong: rgba(255, 216, 74, 0.3);
+                    --assisted-text: #ffe27a;
+                    --human: #4cc285;
+                    --human-bg: rgba(76, 194, 133, 0.08);
+                    --human-bg-strong: rgba(76, 194, 133, 0.2);
+                    --plag: #8fa2ff;
+                    --plag-bg: rgba(143, 162, 255, 0.18);
                     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
                     --shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
                     --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
@@ -100,33 +104,36 @@
             }
 
             :root[data-theme="dark"] {
-                --bg: #0e1413;
-                --bg-subtle: #131b19;
-                --bg-muted: #1a2421;
-                --surface: #141c1a;
-                --border: #24302d;
-                --border-strong: #33413d;
-                --text: #ecf0ee;
-                --text-2: #b4bdba;
-                --text-3: #7f8a87;
-                --accent: #f0a033;
-                --accent-strong: #ffb655;
-                --accent-soft: rgba(240, 160, 51, 0.14);
-                --on-accent: #1a1204;
-                --ink: #ecf0ee;
-                --on-ink: #0e1413;
-                --ai: #ff7a52;
-                --ai-bg: rgba(255, 110, 70, 0.16);
-                --ai-bg-strong: rgba(255, 110, 70, 0.3);
-                --assisted: #f2c230;
-                --assisted-bg: rgba(242, 194, 48, 0.2);
-                --assisted-bg-strong: rgba(242, 194, 48, 0.36);
-                --assisted-text: #f2c230;
-                --human: #4fc193;
-                --human-bg: rgba(79, 193, 147, 0.1);
-                --human-bg-strong: rgba(79, 193, 147, 0.24);
-                --plag: #a596ff;
-                --plag-bg: rgba(165, 150, 255, 0.2);
+                --bg: #0f1714;
+                --bg-subtle: #131d19;
+                --bg-muted: #1b2622;
+                --surface: #16201c;
+                --border: #25322d;
+                --border-strong: #34433d;
+                --text: #eef0ec;
+                --text-2: #b6beba;
+                --text-3: #8a96a3;
+                --accent: #3fae6e;
+                --accent-strong: #5cc285;
+                --accent-soft: rgba(63, 174, 110, 0.14);
+                --on-accent: #0b1410;
+                --cta: #ff6a14;
+                --cta-strong: #ff8a45;
+                --on-cta: #ffffff;
+                --ink: #eef0ec;
+                --on-ink: #0f1714;
+                --ai: #ff7a33;
+                --ai-bg: rgba(255, 106, 20, 0.18);
+                --ai-bg-strong: rgba(255, 106, 20, 0.32);
+                --assisted: #ffd84a;
+                --assisted-bg: rgba(255, 216, 74, 0.16);
+                --assisted-bg-strong: rgba(255, 216, 74, 0.3);
+                --assisted-text: #ffe27a;
+                --human: #4cc285;
+                --human-bg: rgba(76, 194, 133, 0.08);
+                --human-bg-strong: rgba(76, 194, 133, 0.2);
+                --plag: #8fa2ff;
+                --plag-bg: rgba(143, 162, 255, 0.18);
                 --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
                 --shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
                 --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
@@ -151,6 +158,7 @@
                 background: var(--bg);
                 color: var(--text);
                 -webkit-font-smoothing: antialiased;
+                font-variant-numeric: tabular-nums;
             }
 
             button,
@@ -210,11 +218,20 @@
             }
 
             .btn-primary {
+                background: var(--cta);
+                color: var(--on-cta);
+            }
+
+            .btn-primary:hover:not(:disabled) {
+                background: var(--cta-strong);
+            }
+
+            .btn-accent {
                 background: var(--accent);
                 color: var(--on-accent);
             }
 
-            .btn-primary:hover:not(:disabled) {
+            .btn-accent:hover:not(:disabled) {
                 background: var(--accent-strong);
             }
 
@@ -299,7 +316,7 @@
             .sidebar {
                 width: var(--sidebar-w);
                 flex-shrink: 0;
-                background: var(--bg-subtle);
+                background: var(--surface);
                 border-right: 1px solid var(--border);
                 display: flex;
                 flex-direction: column;
@@ -317,8 +334,8 @@
                 width: 30px;
                 height: 30px;
                 border-radius: 8px;
-                background: var(--ink);
-                color: var(--on-ink);
+                background: var(--accent);
+                color: var(--on-accent);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -330,8 +347,8 @@
             }
 
             .brand-name {
-                font-family: var(--font-serif);
-                font-size: 26px;
+                font-size: 18px;
+                font-weight: 700;
                 line-height: 1;
                 letter-spacing: -0.01em;
             }
@@ -378,7 +395,7 @@
                 padding: 0 10px 0 32px;
                 border-radius: var(--radius-sm);
                 border: 1px solid var(--border);
-                background: var(--surface);
+                background: var(--bg);
                 font-size: 13px;
             }
 
@@ -442,13 +459,12 @@
             }
 
             .history-item:hover {
-                background: var(--bg-muted);
+                background: var(--bg-subtle);
             }
 
             .history-item.active {
-                background: var(--surface);
-                border-color: var(--border);
-                box-shadow: var(--shadow-sm);
+                background: var(--accent-soft);
+                border-color: transparent;
             }
 
             .history-item-preview {
@@ -545,7 +561,7 @@
                 gap: 12px;
                 padding: 0 20px;
                 border-bottom: 1px solid var(--border);
-                background: var(--bg);
+                background: var(--surface);
             }
 
             .topbar-title {
@@ -592,15 +608,15 @@
             }
 
             .hero h1 {
-                font-family: var(--font-serif);
-                font-weight: 400;
-                font-size: 52px;
-                line-height: 1.05;
-                letter-spacing: -0.015em;
+                font-weight: 600;
+                font-size: 40px;
+                line-height: 1.15;
+                letter-spacing: -0.02em;
             }
 
             .hero h1 em {
-                color: var(--accent);
+                font-style: normal;
+                color: var(--cta);
             }
 
             .hero p {
@@ -661,7 +677,7 @@
             .counts {
                 font-size: 12.5px;
                 color: var(--text-3);
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
             }
 
             .counts.warn {
@@ -823,7 +839,7 @@
                 display: flex;
                 flex-direction: column;
                 min-height: 0;
-                background: var(--bg-subtle);
+                background: var(--bg);
             }
 
             .doc-toolbar {
@@ -833,7 +849,7 @@
                 flex-wrap: wrap;
                 padding: 10px 20px;
                 border-bottom: 1px solid var(--border);
-                background: var(--bg);
+                background: var(--surface);
             }
 
             .doc-toolbar-label {
@@ -873,7 +889,7 @@
             }
 
             .toggle-chip .num {
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-size: 11.5px;
                 color: var(--text-3);
             }
@@ -906,10 +922,10 @@
             }
 
             .doc-heading h2 {
-                font-family: var(--font-serif);
-                font-weight: 400;
-                font-size: 30px;
-                line-height: 1.15;
+                font-weight: 600;
+                font-size: 22px;
+                line-height: 1.25;
+                letter-spacing: -0.01em;
             }
 
             .doc-heading .meta {
@@ -1021,7 +1037,7 @@
                 justify-content: space-between;
                 gap: 16px;
                 opacity: 0.8;
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-size: 11px;
             }
 
@@ -1147,9 +1163,10 @@
             }
 
             .verdict-headline {
-                font-family: var(--font-serif);
-                font-size: 32px;
-                line-height: 1.1;
+                font-size: 24px;
+                font-weight: 600;
+                letter-spacing: -0.01em;
+                line-height: 1.2;
                 margin: 8px 0 8px;
                 color: var(--text);
             }
@@ -1241,7 +1258,7 @@
             }
 
             .breakdown-row .pct {
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-weight: 500;
                 min-width: 48px;
                 text-align: right;
@@ -1266,7 +1283,7 @@
             }
 
             .stat-value {
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-size: 18px;
                 font-weight: 500;
                 margin-top: 2px;
@@ -1308,7 +1325,7 @@
             }
 
             .conf-row .n {
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 text-align: right;
                 color: var(--text-3);
             }
@@ -1326,7 +1343,7 @@
 
             .kv dd {
                 text-align: right;
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-size: 12.5px;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -1437,7 +1454,7 @@
             }
 
             .graph-card .axis text {
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-size: 10px;
                 fill: var(--text-3);
             }
@@ -1552,7 +1569,7 @@
                 display: flex;
                 gap: 4px;
                 margin-top: 4px;
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-size: 10px;
                 color: var(--text-3);
             }
@@ -1640,7 +1657,7 @@
             }
 
             .meter-head b {
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-weight: 500;
                 color: var(--text);
             }
@@ -1698,7 +1715,7 @@
             }
 
             .mini-kv b {
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-weight: 500;
                 font-size: 13px;
             }
@@ -1787,7 +1804,7 @@
             }
 
             .seg-row .s {
-                font-family: var(--font-mono);
+                font-variant-numeric: tabular-nums;
                 font-size: 12px;
                 color: var(--text-3);
                 text-align: right;
@@ -2102,7 +2119,7 @@
                 </div>
 
                 <div class="sidebar-actions">
-                    <button class="btn btn-ink" id="new-check-btn">
+                    <button class="btn btn-accent" id="new-check-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
                         New check
                     </button>
