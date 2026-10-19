@@ -4,12 +4,16 @@ A sleek web interface for [Pangram Labs](https://pangramlabs.com) AI text detect
 
 ## Features
 
-- **Real-time Analysis** - Submit text and get instant AI detection results
-- **Segment Highlighting** - Interactive visualization showing which parts are human vs AI-written
-- **Score Breakdown** - Detailed confidence scores for human, AI, and mixed content
-- **Analysis History** - Keep track of previous analyses in the sidebar
-- **Dark/Light Theme** - Toggle between themes with system preference detection
-- **Dashboard Links** - Direct links to detailed Pangram Labs reports
+- **Pangram-style results view** - Document on the left with toggleable AI-generated / AI-assisted / human / plagiarism highlights, report panel on the right with Overview, Graph, Details and Notes & Tags tabs
+- **Detailed report** - Verdict, composition (fractions and segment counts), word/token/character statistics, word-weighted and peak AI assistance scores, segment confidence breakdown, model and version info
+- **Humanizer detection** - Per-segment humanizer flags and scores (Pangram 4 models)
+- **Graph view** - AI assistance score across the document, document heat map and score distribution; click any bar to jump to that passage
+- **Segment details** - Step through segments (← / →) with label, confidence, AI assistance score, humanizer score, word and token counts and character range
+- **Plagiarism check** - Optional check against online sources, with matched sentences underlined in the document
+- **Model selection** - Pick any model available to your API key
+- **Notes, tags and titles** - Organise saved checks; search across all checks
+- **Export** - Print / save as PDF, copy a text summary, download segments as CSV or the full API response as JSON
+- **Light/Dark theme** - Follows system preference, with a manual toggle
 
 ## Prerequisites
 
@@ -35,6 +39,17 @@ A sleek web interface for [Pangram Labs](https://pangramlabs.com) AI text detect
    ```
 
 4. Open http://localhost:3000 in your browser
+
+### Configuration
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `PANGRAM_API_KEY` | – | Your Pangram API key (required) |
+| `PORT` | `3000` | Port the server listens on |
+| `PANGRAM_API_URL` | `https://text.external-api.pangram.com` | AI detection API base URL (task-based API) |
+| `PANGRAM_PLAGIARISM_URL` | `https://plagiarism.api.pangram.com` | Plagiarism API URL |
+
+Analyses use Pangram's asynchronous task API: the server submits a task, polls it until it completes, and returns the full result to the browser. Your history is stored only in your browser's local storage.
 
 ## Development
 
