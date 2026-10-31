@@ -6,6 +6,7 @@ A private admin panel for humanizing text with [StealthGPT](https://www.stealthg
 
 - **Two tabs, usable on their own or together.**
   - **Humanize**: paste text, pick StealthGPT's model (Lite, Standard or Super), quality mode (Fast or Quality) and output format, and humanize. Re-humanize any version, or edit one by hand. Every edit is saved as a new version.
+  - **Text preservation**: keep marked spans unchanged with inline or split rewriting, custom delimiters and marker lengths. Each version records the marker counts and whether StealthGPT used a split fallback.
   - **Pangram**: paste text for a full Pangram report, or check any version of a document.
   - **In sequence**: after humanizing, one **Check with Pangram** click checks the new version. Turn on *Then check with Pangram* to have each rewrite checked automatically.
 - **Every version is kept.** A document holds the original text plus every humanized or edited version. Versions never change after they are created. Each one keeps its own StealthGPT settings, human score, cost, Pangram result and plagiarism result.
@@ -84,6 +85,21 @@ The rates are hard-coded in [`src/lib/pricing.ts`](src/lib/pricing.ts).
 
 The model, quality mode, output format and Pangram model selects have no "default" option. The first time, they start on the lowest option: Lite, Fast, plain text, and the oldest Pangram model the API lists. After that, ZamWriter remembers your latest choice in this browser.
 
+### Text preservation
+
+Turn on **Preserve marked text** when starting a document or humanizing an existing version. By default, markers such as `[[T1]]` remain unchanged and in order while the surrounding text is rewritten. The UI shows how many markers it recognizes. Preservation is off initially; your choices are remembered in this browser and saved with each run, including runs resumed after a reload.
+
+Under **Preservation settings**, choose:
+
+- **Inline** (default): rewrite in one pass for natural flow, with a split fallback if needed.
+- **Split**: rewrite each stretch between markers separately. Short fragments may read less naturally.
+- **Opening / closing delimiters**: default `[[` / `]]`, each 1–10 characters without whitespace and different from each other.
+- **Maximum marker length**: default 10, adjustable from 1 to 64 characters between the delimiters. Longer or unclosed spans are ordinary text and may be rewritten.
+
+For example, `Read [[A1]]our pricing guide[[A2]] today.` keeps the two markers but still rewrites the link text. To preserve a whole link, HTML tag, heading or passage, replace it with a single marker before submitting and restore the original content afterward. ZamWriter does not automatically tokenize or restore HTML or links.
+
+Completed versions show the preserved/recognized marker counts, requested mode and any split fallback. Estimated humanize costs exclude recognized markers in both input and output; Pangram estimates still count the full text. See the [StealthGPT text-preservation documentation](https://docs.stealthgpt.ai/api-reference/text-preservation) for model-specific behavior.
+
 ## Security
 
 - Signing in exchanges `ADMIN_API_KEY` for a session cookie. The cookie lasts 30 days and is `HttpOnly` and `SameSite=Strict`. It is also `Secure` when the request arrives over HTTPS.
@@ -112,8 +128,8 @@ All routes except `/api/auth/*` require a session cookie or a Bearer token.
 | `GET` | `/api/auth/session` | Whether the request is signed in, plus which services are configured |
 | `POST` | `/api/auth/login` | `{ key }` → sets the session cookie |
 | `POST` | `/api/auth/logout` | Clears the session cookie |
-| `POST` | `/api/humanizer/runs` | `{ text, qualityMode, model?, outputFormat, idempotencyKey? }` → starts a StealthGPT run |
-| `GET` | `/api/humanizer/runs/:id` | Run status. Once `done`, includes `text` and `score` |
+| `POST` | `/api/humanizer/runs` | `{ text, model, qualityMode?, outputFormat?, idempotencyKey?, preservation?, preservationOpen?, preservationClose?, preservationMaxLookahead?, preservationMode? }` → starts a StealthGPT humanize run (`rephrase: true`) |
+| `GET` | `/api/humanizer/runs/:id` | Run status. Once `done`, includes `text`, `score`, and, when supplied by StealthGPT, `preservation: { frozenCount, preservedCount, mode, fallbackUsed }` |
 | `GET` | `/api/pangram/models` | Detection models available to the Pangram key |
 | `POST` | `/api/pangram/tasks` | `{ text, model }` → starts a Pangram detection task |
 | `GET` | `/api/pangram/tasks/:id` | Task stage. Once `done`, includes the full result |

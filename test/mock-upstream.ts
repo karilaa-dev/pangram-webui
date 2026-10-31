@@ -1,5 +1,7 @@
 // A fake Pangram + StealthGPT API for tests and for trying the UI without
 // spending credits (`bun run demo`).
+import type { HumanizeRequest } from "../server/stealth";
+import type { PreservationResult } from "../src/lib/preservation";
 
 export const MOCK_PANGRAM_KEY = "mock-pangram-key";
 export const MOCK_STEALTH_KEY = "mock-stealth-key";
@@ -87,9 +89,9 @@ function humanize(text: string) {
 
 export function startMockUpstream(port = 0) {
   const tasks = new Map<string, { text: string; polls: number }>();
-  const runs = new Map<string, { text: string; polls: number }>();
+  const runs = new Map<string, { text: string; polls: number; preservation?: PreservationResult }>();
   let counter = 0;
-  const state = { pangramSubmits: 0, stealthStarts: 0, idempotencyKeys: [] as string[] };
+  const state = { pangramSubmits: 0, stealthStarts: 0, idempotencyKeys: [] as string[], stealthRequests: [] as (HumanizeRequest & { rephrase?: boolean })[] };
 
   const pangramAuth = (req: Request) =>
     req.headers.get("x-api-key") === MOCK_PANGRAM_KEY
@@ -144,15 +146,36 @@ export function startMockUpstream(port = 0) {
         POST: async (req) => {
           const denied = stealthAuth(req);
           if (denied) return denied;
-          const body = (await req.json()) as { text: string; model?: string };
+          const body = (await req.json()) as HumanizeRequest & { rephrase?: boolean };
           if (!body.text) return Response.json({ message: "text is required" }, { status: 400 });
           if (!["super", "standard", "lite"].includes(body.model ?? "")) {
             return Response.json({ message: 'model is required: pass "super", "standard", or "lite"' }, { status: 400 });
           }
+          if (body.preservation && body.rephrase !== true) {
+            return Response.json({ message: "preservation requires rephrase: true" }, { status: 400 });
+          }
+          state.stealthRequests.push(body);
           const key = req.headers.get("idempotency-key");
           if (key) state.idempotencyKeys.push(key);
           const runId = `hum_${++counter}`;
-          runs.set(runId, { text: body.text, polls: 0 });
+          let text = humanize(body.text);
+          let preservation: PreservationResult | undefined;
+          if (body.preservation) {
+            // Model the documented behavior independently of the client's marker counter.
+            const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const markers = new RegExp(`${escape(body.preservationOpen ?? "[[")}[\\s\\S]{0,${body.preservationMaxLookahead ?? 10}}?${escape(body.preservationClose ?? "]]")}`, "g");
+            let cursor = 0;
+            let frozenCount = 0;
+            text = "";
+            for (const marker of body.text.matchAll(markers)) {
+              text += humanize(body.text.slice(cursor, marker.index)) + marker[0];
+              cursor = marker.index + marker[0].length;
+              frozenCount++;
+            }
+            text += humanize(body.text.slice(cursor));
+            preservation = { frozenCount, preservedCount: frozenCount, mode: body.preservationMode ?? "inline", fallbackUsed: false };
+          }
+          runs.set(runId, { text, polls: 0, preservation });
           state.stealthStarts++;
           return Response.json(
             { runId, status: "queued", statusUrl: `/api/stealthify/runs/${runId}` },
@@ -172,7 +195,8 @@ export function startMockUpstream(port = 0) {
           return Response.json({
             runId: req.params.id,
             status: "completed",
-            result: humanize(run.text),
+            result: run.text,
+            ...(run.preservation ? { preservation: run.preservation } : {}),
             howLikelyToBeDetected: 70 + (hash(run.text) % 30),
           });
         },

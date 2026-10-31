@@ -1,6 +1,7 @@
 import { HttpError, api } from "./api";
 import { countWords } from "./format";
 import { humanizeCost, pangramCost } from "./pricing";
+import { humanizeWordCount } from "./preservation";
 import { store, toasts, versionLabel } from "./store";
 import type { Doc, HumanizeJob, HumanizeSettings, Job, PangramJob, Version } from "./types";
 
@@ -99,14 +100,14 @@ async function runHumanize(docId: string, job: HumanizeJob) {
   if (run.status !== "completed" || run.text === null) throw new RunFailed(run.error || `Run ${run.status}`);
 
   const text = run.text.trim();
-  const costUsd = humanizeCost(job.settings.model, countWords(source.text), countWords(text));
+  const costUsd = humanizeCost(job.settings.model, humanizeWordCount(source.text, job.settings), humanizeWordCount(text, job.settings));
   const version: Version = {
     id: crypto.randomUUID(),
     kind: "humanized",
     text,
     createdAt: Date.now(),
     sourceId: job.sourceId,
-    humanize: { runId, settings: job.settings, score: run.score, costUsd },
+    humanize: { runId, settings: job.settings, score: run.score, costUsd, preservation: run.preservation },
   };
   store.update(docId, (d) => ({
     ...removeJob(d, job.id),

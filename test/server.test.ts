@@ -197,6 +197,58 @@ describe("HTTP API", () => {
     expect(empty.status).toBe(400);
   });
 
+  test("preservation forwards defaults and custom options and returns marker metadata", async () => {
+    for (const options of [
+      { text: "We utilize [[important]][[very]] tools. [[important]]", preservation: true },
+      { text: "We utilize ${important}${very} tools.", preservation: true, preservationOpen: "${", preservationClose: "}", preservationMaxLookahead: 64, preservationMode: "split" },
+      { text: "We utilize [[important]] tools.", preservation: false },
+    ]) {
+      const start = await fetch(`${base}/api/humanizer/runs`, {
+        method: "POST", headers: bearer,
+        body: JSON.stringify({ ...options, model: "super", idempotencyKey: "preservation-key" }),
+      });
+      expect(start.status).toBe(200);
+      expect(mock.state.stealthRequests.at(-1)).toMatchObject({ ...options, rephrase: true });
+      expect(mock.state.stealthRequests.at(-1)).not.toHaveProperty("idempotencyKey");
+      expect(mock.state.idempotencyKeys.at(-1)).toBe("preservation-key");
+      const run: any = await start.json();
+      const { data } = await poll(`/api/humanizer/runs/${run.runId}`, bearer);
+      if (options.preservation) {
+        expect(data.text).toBe(options.text.replace("utilize", "use"));
+        expect(data.preservation).toEqual({
+          frozenCount: options.preservationMode ? 2 : 3,
+          preservedCount: options.preservationMode ? 2 : 3,
+          mode: options.preservationMode ?? "inline", fallbackUsed: false,
+        });
+      } else {
+        expect(data.text).toBe("We use [[key]] tools.");
+        expect(data).not.toHaveProperty("preservation");
+      }
+    }
+  });
+
+  test("invalid preservation settings never start a paid run", async () => {
+    const starts = mock.state.stealthStarts;
+    for (const options of [
+      { preservation: "true" }, { preservation: null },
+      { preservationOpen: "" }, { preservationOpen: "a b" }, { preservationOpen: "a\tb" },
+      { preservationOpen: "12345678901" }, { preservationOpen: null },
+      { preservationClose: "" }, { preservationClose: "\n" }, { preservationClose: 42 },
+      { preservationClose: "12345678901" }, { preservationClose: "[[" },
+      { preservationMaxLookahead: 0 }, { preservationMaxLookahead: 65 },
+      { preservationMaxLookahead: 1.5 }, { preservationMaxLookahead: "10" }, { preservationMaxLookahead: null },
+      { preservationMode: "other" }, { preservationMode: null },
+    ]) {
+      const res = await fetch(`${base}/api/humanizer/runs`, {
+        method: "POST", headers: bearer,
+        body: JSON.stringify({ text: "We utilize [[T1]] tools.", model: "lite", preservation: true, ...options }),
+      });
+      expect(res.status).toBe(400);
+      expect((await res.json() as any).error).toBeString();
+    }
+    expect(mock.state.stealthStarts).toBe(starts);
+  });
+
   test("pangram task: submit, poll, result", async () => {
     const text = "This is a test. It has sentences! Does it work? Yes it does.";
     const submit = await fetch(`${base}/api/pangram/tasks`, {

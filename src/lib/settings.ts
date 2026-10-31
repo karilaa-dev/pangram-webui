@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { api } from "./api";
 import { observable, useObservable } from "./store";
 import type { HumanizeSettings } from "./types";
+import { PRESERVATION_DEFAULTS, preservationError } from "./preservation";
 
 // Options are listed lowest first; the first one is the initial choice.
 export const QUALITY_MODES = { fast: "Fast", quality: "Quality" };
@@ -25,8 +26,11 @@ function loadPreferences(): Preferences {
   try {
     saved = JSON.parse(localStorage.getItem(PREFS_KEY) || "{}");
   } catch {}
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) saved = {};
+  const preservation = Object.fromEntries(Object.entries(PRESERVATION_DEFAULTS).map(([key, value]) => [key, saved[key] ?? value]));
   // Values that are no longer options (such as the old "default" model) fall back to the lowest option.
   return {
+    ...(preservationError(preservation) ? PRESERVATION_DEFAULTS : preservation),
     qualityMode: oneOf(QUALITY_MODES, saved.qualityMode),
     model: oneOf(HUMANIZER_MODELS, saved.model),
     outputFormat: oneOf(OUTPUT_FORMATS, saved.outputFormat),
@@ -81,4 +85,11 @@ export const humanizeSettings = (p: Preferences): HumanizeSettings => ({
   qualityMode: p.qualityMode,
   model: p.model,
   outputFormat: p.outputFormat,
+  ...(p.preservation ? {
+    preservation: true,
+    preservationOpen: p.preservationOpen ?? PRESERVATION_DEFAULTS.preservationOpen,
+    preservationClose: p.preservationClose ?? PRESERVATION_DEFAULTS.preservationClose,
+    preservationMaxLookahead: p.preservationMaxLookahead ?? PRESERVATION_DEFAULTS.preservationMaxLookahead,
+    preservationMode: p.preservationMode ?? PRESERVATION_DEFAULTS.preservationMode,
+  } : {}),
 });

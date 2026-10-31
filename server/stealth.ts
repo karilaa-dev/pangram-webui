@@ -1,5 +1,6 @@
 import type { Config } from "./config";
 import { ApiError, upstreamFetch } from "./http";
+import { preservationError, type PreservationSettings, type PreservationResult } from "../src/lib/preservation";
 
 // StealthGPT "Writer & Humanizer" async runs: POST /api/stealthify/runs starts a
 // run, GET /api/stealthify/runs/:id reports queued → running → completed.
@@ -9,7 +10,7 @@ export const OUTPUT_FORMATS = ["text", "markdown"] as const;
 export const MODELS = ["lite", "standard", "super"] as const;
 const TERMINAL = new Set(["completed", "failed", "cancelled"]);
 
-export interface HumanizeRequest {
+export interface HumanizeRequest extends PreservationSettings {
   text: string;
   qualityMode: (typeof QUALITY_MODES)[number];
   outputFormat: (typeof OUTPUT_FORMATS)[number];
@@ -25,6 +26,7 @@ export interface HumanizeRun {
   /** Human-likeness score 0–100 (StealthGPT's `howLikelyToBeDetected`; higher = more human). */
   score: number | null;
   error: string | null;
+  preservation?: PreservationResult;
 }
 
 const numberOrNull = (...values: unknown[]) => {
@@ -43,6 +45,7 @@ export function normalizeRun(data: any): HumanizeRun {
     ) ?? null;
   const status = typeof data?.status === "string" ? data.status : "unknown";
   const error = data?.error?.message ?? (typeof data?.error === "string" ? data.error : null);
+  const preservation = normalizePreservation(data?.preservation) ?? normalizePreservation(nested.preservation);
   return {
     runId: String(data?.runId ?? data?.id ?? ""),
     status,
@@ -50,7 +53,15 @@ export function normalizeRun(data: any): HumanizeRun {
     text,
     score: numberOrNull(data?.howLikelyToBeDetected, nested.howLikelyToBeDetected),
     error: status === "failed" || status === "cancelled" ? error || `Run ${status}` : null,
+    ...(preservation ? { preservation } : {}),
   };
+}
+
+function normalizePreservation(value: any): PreservationResult | undefined {
+  if (!value || !Number.isInteger(value.frozenCount) || value.frozenCount < 0 ||
+      !Number.isInteger(value.preservedCount) || value.preservedCount < 0 ||
+      !["inline", "split"].includes(value.mode) || typeof value.fallbackUsed !== "boolean") return undefined;
+  return { frozenCount: value.frozenCount, preservedCount: value.preservedCount, mode: value.mode, fallbackUsed: value.fallbackUsed };
 }
 
 export function parseHumanizeRequest(body: Record<string, unknown>, text: string): HumanizeRequest {
@@ -65,12 +76,19 @@ export function parseHumanizeRequest(body: Record<string, unknown>, text: string
   if (key !== undefined && (typeof key !== "string" || key.length < 1 || key.length > 255)) {
     throw new ApiError("Invalid idempotencyKey", 400);
   }
+  const preservation: PreservationSettings = {};
+  for (const field of ["preservation", "preservationOpen", "preservationClose", "preservationMaxLookahead", "preservationMode"] as const) {
+    if (body[field] !== undefined) Object.assign(preservation, { [field]: body[field] });
+  }
+  const error = preservationError(preservation);
+  if (error) throw new ApiError(error, 400);
   return {
     text,
     qualityMode: qualityMode as HumanizeRequest["qualityMode"],
     outputFormat: outputFormat as HumanizeRequest["outputFormat"],
     model: model as HumanizeRequest["model"],
     idempotencyKey: key as string | undefined,
+    ...preservation,
   };
 }
 
@@ -87,7 +105,7 @@ export function stealthClient(config: Config["stealth"]) {
     async start({ idempotencyKey, ...request }: HumanizeRequest): Promise<HumanizeRun> {
       const data = await call("/api/stealthify/runs", {
         method: "POST",
-        body: JSON.stringify(request),
+        body: JSON.stringify({ ...request, rephrase: true }),
         // Lets the browser retry a start without creating a second paid run.
         headers: idempotencyKey ? { "idempotency-key": idempotencyKey } : {},
       });

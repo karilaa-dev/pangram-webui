@@ -1,4 +1,5 @@
 import type { HumanizeSettings, PangramResult, Services } from "./types";
+import type { PreservationResult } from "./preservation";
 
 export class HttpError extends Error {
   constructor(
@@ -42,6 +43,7 @@ export interface HumanizeRun {
   text: string | null;
   score: number | null;
   error: string | null;
+  preservation?: PreservationResult;
 }
 
 export const api = {

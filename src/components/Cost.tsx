@@ -1,6 +1,7 @@
 import { Tooltip } from "@cloudflare/kumo/components/tooltip";
 import { countWords } from "../lib/format";
 import { humanizeCost, humanizeRate, pangramCost, pangramRate, usd } from "../lib/pricing";
+import { humanizeWordCount } from "../lib/preservation";
 import { HUMANIZER_MODELS } from "../lib/settings";
 import type { Doc, Version } from "../lib/types";
 
@@ -9,11 +10,13 @@ const modelName = (model: string) => HUMANIZER_MODELS[model as keyof typeof HUMA
 /** "Est. cost ≈ $0.16 humanize + $0.25 Pangram" for actions about to run on `words` words. */
 export function CostEstimate({
   words,
+  humanizeWords = words,
   humanizeModel,
   pangramModel,
   label = "Est. cost",
 }: {
   words: number;
+  humanizeWords?: number;
   humanizeModel?: string;
   pangramModel?: string;
   label?: string;
@@ -23,8 +26,8 @@ export function CostEstimate({
   if (humanizeModel) {
     parts.push({
       name: "humanize",
-      cost: humanizeCost(humanizeModel, words),
-      basis: `StealthGPT ${modelName(humanizeModel)}: ${humanizeRate(humanizeModel)}, counting input + output words. Assumes the rewrite is about as long as the input.`,
+      cost: humanizeCost(humanizeModel, humanizeWords),
+      basis: `StealthGPT ${modelName(humanizeModel)}: ${humanizeRate(humanizeModel)}, counting input + output words, excluding preserved markers. Assumes the rewrite is about as long as the input.`,
     });
   }
   if (pangramModel) {
@@ -56,7 +59,7 @@ export function CostEstimate({
 export function versionCosts(doc: Doc, version: Version) {
   const source = version.sourceId ? doc.versions.find((v) => v.id === version.sourceId) : undefined;
   const h = version.humanize;
-  const humanize = h && (h.costUsd ?? (source ? humanizeCost(h.settings.model, countWords(source.text), countWords(version.text)) : undefined));
+  const humanize = h && (h.costUsd ?? (source ? humanizeCost(h.settings.model, humanizeWordCount(source.text, h.settings), humanizeWordCount(version.text, h.settings)) : undefined));
   const pangram = version.pangram && (version.pangram.costUsd ?? pangramCost(version.pangram.model, countWords(version.text)));
   return { humanize, pangram };
 }

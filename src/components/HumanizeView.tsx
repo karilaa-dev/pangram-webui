@@ -9,6 +9,7 @@ import { useState } from "react";
 import { countWords, titleFromText } from "../lib/format";
 import { humanizeJobs, startHumanize } from "../lib/jobs";
 import { humanizeRate } from "../lib/pricing";
+import { humanizeWordCount, preservationError } from "../lib/preservation";
 import { navigate } from "../lib/router";
 import { HUMANIZER_MODELS, OUTPUT_FORMATS, QUALITY_MODES, humanizeSettings, usePreferences, type Preferences } from "../lib/settings";
 import { store, versionLabel } from "../lib/store";
@@ -17,6 +18,7 @@ import { Composer } from "./Composer";
 import { CostEstimate } from "./Cost";
 import { Columns, TEXT_CLASS, TextPanel } from "./Layout";
 import { MissingKey, PangramCard } from "./PangramCard";
+import { PreservationFields } from "./PreservationFields";
 import { CopyButton, PageHeading, SectionTitle } from "./common";
 
 // Each option shows its price; the closed select shows just the name.
@@ -84,10 +86,11 @@ const thenCheckModel = (prefs: Preferences, services: Services) =>
 export function NewHumanize({ services }: { services: Services }) {
   const [text, setText] = useState("");
   const [prefs, setPrefs] = usePreferences();
+  const invalidPreservation = prefs.preservation && !!preservationError(prefs);
 
   function submit() {
     const value = text.trim();
-    if (!value || !services.humanizer) return;
+    if (!value || !services.humanizer || invalidPreservation) return;
     const doc = store.create(value, titleFromText(value));
     startHumanize(doc.id, doc.versions[0]!.id, humanizeSettings(prefs), thenCheckModel(prefs, services));
     navigate({ tab: "humanize", docId: doc.id });
@@ -112,15 +115,16 @@ export function NewHumanize({ services }: { services: Services }) {
         placeholder="Paste or type the text you want to humanize…"
         footer={
           <>
+            <PreservationFields prefs={prefs} setPrefs={setPrefs} text={text} />
             <SettingsFields prefs={prefs} setPrefs={setPrefs} />
             <div className="flex h-8 items-center">
               <ThenCheckSwitch services={services} />
             </div>
             <div className="flex-1" />
             <div className="flex h-9 items-center">
-              <CostEstimate words={countWords(text)} humanizeModel={prefs.model} pangramModel={thenCheckModel(prefs, services)} />
+              <CostEstimate words={countWords(text)} humanizeWords={humanizeWordCount(text, prefs)} humanizeModel={prefs.model} pangramModel={thenCheckModel(prefs, services)} />
             </div>
-            <Button variant="primary" icon={MagicWandIcon} disabled={!text.trim() || !services.humanizer} onClick={submit}>
+            <Button variant="primary" icon={MagicWandIcon} disabled={!text.trim() || !services.humanizer || invalidPreservation} onClick={submit}>
               Humanize
             </Button>
           </>
@@ -249,18 +253,20 @@ function HumanizeCard({ doc, version, services }: { doc: Doc; version: Version; 
             <div className="grid grid-cols-3 gap-2">
               <SettingsFields prefs={prefs} setPrefs={setPrefs} fill />
             </div>
+            <PreservationFields prefs={prefs} setPrefs={setPrefs} text={version.text} />
             <ThenCheckSwitch services={services} />
             <Button
               variant="primary"
               icon={MagicWandIcon}
               className="w-full justify-center"
+              disabled={prefs.preservation && !!preservationError(prefs)}
               onClick={() => startHumanize(doc.id, version.id, humanizeSettings(prefs), thenCheckModel(prefs, services))}
             >
               {version.kind === "original" ? "Humanize" : `Humanize ${label} again`}
             </Button>
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-kumo-subtle">
               <span>{running ? `${running} run${running === 1 ? "" : "s"} in progress from ${label}` : "Creates a new version"}</span>
-              <CostEstimate words={countWords(version.text)} humanizeModel={prefs.model} pangramModel={thenCheckModel(prefs, services)} />
+              <CostEstimate words={countWords(version.text)} humanizeWords={humanizeWordCount(version.text, prefs)} humanizeModel={prefs.model} pangramModel={thenCheckModel(prefs, services)} />
             </div>
           </>
         )}

@@ -57,6 +57,14 @@ function VersionHeader({ doc, version }: { doc: Doc; version: Version }) {
     if (typeof h.score === "number") {
       items.push({ label: "Human score", value: `${Math.round(h.score)} / 100`, title: "StealthGPT's estimate; higher reads more human" });
     }
+    if (h.settings.preservation) {
+      const p = h.preservation;
+      items.push({
+        label: "Preservation",
+        value: p ? `${p.preservedCount} / ${p.frozenCount} markers kept · ${p.mode}${p.fallbackUsed ? " · split fallback used" : ""}` : "Enabled · result unavailable",
+        title: p?.fallbackUsed ? "Some text was rewritten in separate stretches to keep its markers unchanged." : undefined,
+      });
+    }
   }
   items.push({ label: "Words", value: num(countWords(version.text)) });
   if (costs.humanize || costs.pangram) {

@@ -1,8 +1,10 @@
+import type { PreservationResult, PreservationSettings } from "./preservation";
+
 export type Tab = "humanize" | "pangram";
 
 export type VersionKind = "original" | "humanized" | "edited";
 
-export interface HumanizeSettings {
+export interface HumanizeSettings extends PreservationSettings {
   qualityMode: "quality" | "fast";
   /** StealthGPT model: "lite", "standard" or "super". */
   model: string;
@@ -64,6 +66,7 @@ export interface Version {
     score: number | null;
     /** Estimated USD cost of the run (input + output words), at the rate configured when it ran. */
     costUsd?: number;
+    preservation?: PreservationResult;
   };
   pangram?: PangramCheck;
   plagiarism?: Record<string, any>;
