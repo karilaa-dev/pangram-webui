@@ -12,10 +12,11 @@ import { store } from "../../lib/store";
 import type { PangramCheck, Version } from "../../lib/types";
 import { SEG_BADGE, SectionTitle, Swatch } from "../common";
 
-const VERDICT_RING: Record<SegClass, string> = {
-  ai: "border-l-zw-ai",
-  assisted: "border-l-zw-assisted",
-  human: "border-l-zw-human",
+// The verdict card takes a light tint of its class colour.
+const VERDICT_TINT: Record<SegClass, string> = {
+  ai: "bg-zw-ai-tint",
+  assisted: "bg-zw-assisted-tint",
+  human: "bg-zw-human-tint",
 };
 
 function Section({ title, aside, children }: { title: string; aside?: string; children: ReactNode }) {
@@ -49,13 +50,16 @@ export function Overview({
   return (
     <div>
       <section className="px-5 pt-5 pb-4">
-        <div className={cn("rounded-lg border-l-4 bg-kumo-elevated px-4 py-3.5 ring-1 ring-kumo-hairline", VERDICT_RING[vcls])}>
-          <div className="flex items-center justify-between gap-2 text-xs text-kumo-subtle">
-            <span>Pangram verdict</span>
+        <div className={cn("rounded-lg px-4 py-3.5 ring-1 ring-kumo-hairline", VERDICT_TINT[vcls])}>
+          <div className="flex items-center justify-between gap-2 text-xs text-kumo-default">
+            <span className="flex items-center gap-1.5">
+              <Swatch cls={vcls} />
+              Pangram verdict
+            </span>
             {d.prediction_short && <Badge variant={SEG_BADGE[vcls]}>{d.prediction_short}</Badge>}
           </div>
           <div className="mt-1 text-xl font-semibold text-kumo-strong">{d.headline || d.prediction || "Result"}</div>
-          {d.prediction && d.prediction !== d.headline && <p className="mt-1 text-sm text-kumo-subtle">{d.prediction}</p>}
+          {d.prediction && d.prediction !== d.headline && <p className="mt-1 text-sm text-kumo-default">{d.prediction}</p>}
         </div>
       </section>
 

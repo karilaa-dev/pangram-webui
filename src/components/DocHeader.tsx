@@ -44,12 +44,12 @@ export function DocHeader({ doc, tab }: { doc: Doc; tab: Tab }) {
         </div>
       </div>
       <div className="no-print flex shrink-0 items-center gap-1">
-        <Button size="sm" icon={NotePencilIcon} onClick={() => setEditing(true)}>
+        <Button size="sm" icon={NotePencilIcon} aria-label="Document details" onClick={() => setEditing(true)}>
           <span className="hidden sm:inline">Details</span>
         </Button>
         <DropdownMenu>
           <DropdownMenu.Trigger
-            render={<Button size="sm" variant="ghost" shape="square" icon={DotsThreeIcon} aria-label="Document actions" />}
+            render={<Button size="sm" variant="ghost" shape="square" icon={<DotsThreeIcon weight="bold" />} aria-label="Document actions" />}
           />
           <DropdownMenu.Content align="end">
             <DropdownMenu.Item

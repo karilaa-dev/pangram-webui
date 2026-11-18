@@ -98,7 +98,7 @@ export function Segments({
               </div>
               <div className="relative h-2 rounded-full bg-linear-to-r from-zw-human via-zw-assisted to-zw-ai">
                 <span
-                  className="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-kumo-base ring-2 ring-kumo-strong"
+                  className="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-kumo-base ring-2 ring-kumo-contrast"
                   style={{ left: `${s.score * 100}%` }}
                 />
               </div>

@@ -7,7 +7,7 @@ import { navigate } from "../lib/router";
 import { usePreferences } from "../lib/settings";
 import { store } from "../lib/store";
 import type { Doc, Services, Version } from "../lib/types";
-import { Composer } from "./Composer";
+import { Composer, ComposerActions } from "./Composer";
 import { CostEstimate } from "./Cost";
 import { Columns, TEXT_CLASS, TextPanel } from "./Layout";
 import { ModelSelect } from "./ModelSelect";
@@ -47,13 +47,11 @@ export function NewCheck({ services }: { services: Services }) {
         footer={
           <>
             <ModelSelect />
-            <div className="flex-1" />
-            <div className="flex h-9 items-center">
-              <CostEstimate words={countWords(text)} pangramModel={prefs.pangramModel} />
-            </div>
-            <Button variant="primary" icon={ScanIcon} disabled={!text.trim() || !services.pangram} onClick={submit}>
-              Check for AI
-            </Button>
+            <ComposerActions cost={<CostEstimate words={countWords(text)} pangramModel={prefs.pangramModel} />}>
+              <Button variant="primary" icon={ScanIcon} disabled={!text.trim() || !services.pangram} onClick={submit}>
+                Check for AI
+              </Button>
+            </ComposerActions>
           </>
         }
       />

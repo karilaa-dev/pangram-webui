@@ -91,8 +91,8 @@ function VersionHeader({ doc, version }: { doc: Doc; version: Version }) {
   items.push({ label: "Created", value: formatRelativeTime(version.createdAt), title: formatDate(version.createdAt) });
 
   return (
-    <div className="mb-5 flex flex-wrap items-center gap-x-7 gap-y-3 rounded-lg bg-kumo-base px-4 py-3 ring-1 ring-kumo-hairline">
-      <div className="flex min-w-36 items-center gap-2">
+    <div className="mb-5 grid grid-cols-2 gap-x-5 gap-y-3 rounded-lg bg-kumo-base px-4 py-3 ring-1 ring-kumo-hairline sm:flex sm:flex-wrap sm:items-center sm:gap-x-7">
+      <div className="col-span-2 flex min-w-36 items-center gap-2">
         <span className="text-lg font-semibold text-kumo-strong">{versionLabel(doc, version)}</span>
         {version.kind !== "original" && (
           <Badge variant={version.kind === "edited" ? "purple" : "blue"}>{KIND_LABELS[version.kind]}</Badge>
@@ -100,7 +100,7 @@ function VersionHeader({ doc, version }: { doc: Doc; version: Version }) {
         {source && <span className="text-xs text-kumo-subtle">from {versionLabel(doc, source)}</span>}
       </div>
       {items.map((item) => (
-        <div key={item.label} title={item.title}>
+        <div key={item.label} title={item.title} className="min-w-0">
           <div className="text-[11px] font-medium tracking-wide text-kumo-subtle uppercase">{item.label}</div>
           <div className="text-sm font-medium text-kumo-default">{item.value}</div>
         </div>

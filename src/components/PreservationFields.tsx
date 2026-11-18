@@ -40,7 +40,6 @@ export function PreservationFields({ prefs, setPrefs, text }: {
             <div className="mt-3 flex flex-col gap-3">
               <Select
                 label="Preservation mode"
-                hideLabel={false}
                 size="sm"
                 className="w-full"
                 value={p.preservationMode}

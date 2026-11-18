@@ -132,7 +132,7 @@ export function PangramReport({ doc, version, check }: { doc: Doc; version: Vers
         />
         <DropdownMenu>
           <DropdownMenu.Trigger
-            render={<Button size="sm" variant="ghost" shape="square" icon={DotsThreeIcon} aria-label="Report actions" className="ml-auto" />}
+            render={<Button size="sm" variant="ghost" shape="square" icon={<DotsThreeIcon weight="bold" />} aria-label="Report actions" className="ml-auto" />}
           />
           <DropdownMenu.Content align="end">
             <DropdownMenu.Item icon={ArrowClockwiseIcon} onClick={() => startPangram(doc.id, version.id, prefs.pangramModel)}>

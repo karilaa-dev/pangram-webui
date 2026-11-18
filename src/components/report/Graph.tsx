@@ -13,10 +13,10 @@ export function Graph({ segments, selected, onSelect }: { segments: Segment[]; s
 
   const W = 380;
   const H = 200;
-  const padL = 30;
+  const padL = 32;
   const padR = 6;
   const padT = 8;
-  const padB = 22;
+  const padB = 26;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
   const totalWords = segments.reduce((a, s) => a + Math.max(1, s.words || 1), 0);
@@ -32,7 +32,8 @@ export function Graph({ segments, selected, onSelect }: { segments: Segment[]; s
     bars.push(
       <rect
         key={s.index}
-        className={cn("cursor-pointer transition-opacity hover:opacity-100", FILL[s.cls], s.index === selected ? "opacity-100 stroke-kumo-strong" : "opacity-80")}
+        className={cn("cursor-pointer transition-opacity hover:opacity-100", FILL[s.cls], s.index === selected ? "text-kumo-strong opacity-100" : "opacity-80")}
+        stroke="currentColor"
         strokeWidth={s.index === selected ? 1.5 : 0}
         x={x + gap / 2}
         y={padT + innerH - h}
@@ -65,7 +66,7 @@ export function Graph({ segments, selected, onSelect }: { segments: Segment[]; s
         <SectionTitle>AI assistance across the document</SectionTitle>
         <div className="rounded-lg bg-kumo-elevated p-3 ring-1 ring-kumo-hairline">
           <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="AI assistance score per segment" className="w-full">
-            <g className="fill-kumo-subtle stroke-kumo-hairline text-[9px]">
+            <g className="fill-current stroke-kumo-line text-[11px] text-kumo-subtle">
               {[0, 0.25, 0.5, 0.75, 1].map((v) => {
                 const y = padT + innerH - v * innerH;
                 return (
@@ -82,12 +83,12 @@ export function Graph({ segments, selected, onSelect }: { segments: Segment[]; s
             {humanizerPoints.length > 1 && (
               <polyline points={humanizerPoints.join(" ")} className="fill-none stroke-zw-plag" strokeWidth={1.5} strokeDasharray="4 3" />
             )}
-            <g className="fill-kumo-subtle text-[9px]">
+            <g className="fill-current text-[11px] text-kumo-subtle">
               <text x={padL} y={H - 6}>
                 Start
               </text>
               <text x={padL + innerW / 2} y={H - 6} textAnchor="middle">
-                Position in document (bar width = words)
+                Position (bar width = words)
               </text>
               <text x={W - padR} y={H - 6} textAnchor="end">
                 End
@@ -129,7 +130,7 @@ export function Graph({ segments, selected, onSelect }: { segments: Segment[]; s
               aria-label={`Segment ${s.index + 1}: ${s.label}`}
               title={`Segment ${s.index + 1}: ${s.label}`}
               onClick={() => onSelect(s.index)}
-              className={cn(SWATCH[s.cls], "min-w-[3px] transition-opacity hover:opacity-100", s.index === selected && "ring-2 ring-kumo-strong ring-inset")}
+              className={cn(SWATCH[s.cls], "min-w-[3px] transition-opacity hover:opacity-100", s.index === selected && "ring-2 ring-kumo-contrast ring-inset")}
               style={{ flex: `${Math.max(1, s.words || 1)} 0 0`, opacity: s.score === null ? 0.6 : 0.3 + 0.7 * s.score }}
             />
           ))}

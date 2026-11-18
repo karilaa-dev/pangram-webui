@@ -28,7 +28,7 @@ export function DocList({ route }: { route: Route }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-2 p-3">
-        <Button variant="primary" icon={PlusIcon} className="w-full justify-center" onClick={() => navigate({ tab: route.tab })}>
+        <Button variant="secondary" icon={PlusIcon} className="w-full justify-center" onClick={() => navigate({ tab: route.tab })}>
           New document
         </Button>
         <Input
@@ -46,7 +46,10 @@ export function DocList({ route }: { route: Route }) {
           Documents{docs.length ? ` · ${docs.length}` : ""}
         </span>
         {docs.length > 0 && (
-          <button className="rounded px-1 hover:text-kumo-danger" onClick={() => setConfirmClear(true)}>
+          <button
+            className="-my-1 rounded px-1.5 py-1 hover:text-kumo-danger focus-visible:outline-2 focus-visible:outline-kumo-focus"
+            onClick={() => setConfirmClear(true)}
+          >
             Clear all
           </button>
         )}

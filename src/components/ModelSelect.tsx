@@ -9,7 +9,6 @@ export function ModelSelect({ className = "w-36" }: { className?: string }) {
   return (
     <Select
       label="Model"
-      hideLabel={false}
       size="sm"
       className={className}
       loading={!models.length}

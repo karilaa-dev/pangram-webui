@@ -14,7 +14,7 @@ import { navigate } from "../lib/router";
 import { HUMANIZER_MODELS, OUTPUT_FORMATS, QUALITY_MODES, humanizeSettings, usePreferences, type Preferences } from "../lib/settings";
 import { store, versionLabel } from "../lib/store";
 import type { Doc, Services, Version } from "../lib/types";
-import { Composer } from "./Composer";
+import { Composer, ComposerActions } from "./Composer";
 import { CostEstimate } from "./Cost";
 import { Columns, TEXT_CLASS, TextPanel } from "./Layout";
 import { MissingKey, PangramCard } from "./PangramCard";
@@ -37,9 +37,8 @@ function SettingsFields({ prefs, setPrefs, fill = false }: { prefs: Preferences;
     <>
       <Select
         label="Model"
-        hideLabel={false}
         size="sm"
-        className={fill ? "w-full" : "w-36"}
+        className={fill ? "w-full" : "w-full sm:w-36"}
         value={prefs.model}
         onValueChange={(v) => setPrefs({ ...prefs, model: v as string })}
         items={MODEL_ITEMS}
@@ -47,18 +46,16 @@ function SettingsFields({ prefs, setPrefs, fill = false }: { prefs: Preferences;
       />
       <Select
         label="Quality"
-        hideLabel={false}
         size="sm"
-        className={fill ? "w-full" : "w-32"}
+        className={fill ? "w-full" : "w-full sm:w-32"}
         value={prefs.qualityMode}
         onValueChange={(v) => setPrefs({ ...prefs, qualityMode: v as Preferences["qualityMode"] })}
         items={QUALITY_MODES}
       />
       <Select
         label="Output"
-        hideLabel={false}
         size="sm"
-        className={fill ? "w-full" : "w-32"}
+        className={fill ? "w-full" : "w-full sm:w-32"}
         value={prefs.outputFormat}
         onValueChange={(v) => setPrefs({ ...prefs, outputFormat: v as Preferences["outputFormat"] })}
         items={OUTPUT_FORMATS}
@@ -116,17 +113,19 @@ export function NewHumanize({ services }: { services: Services }) {
         footer={
           <>
             <PreservationFields prefs={prefs} setPrefs={setPrefs} text={text} />
-            <SettingsFields prefs={prefs} setPrefs={setPrefs} />
+            <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:gap-3">
+              <SettingsFields prefs={prefs} setPrefs={setPrefs} />
+            </div>
             <div className="flex h-8 items-center">
               <ThenCheckSwitch services={services} />
             </div>
-            <div className="flex-1" />
-            <div className="flex h-9 items-center">
-              <CostEstimate words={countWords(text)} humanizeWords={humanizeWordCount(text, prefs)} humanizeModel={prefs.model} pangramModel={thenCheckModel(prefs, services)} />
-            </div>
-            <Button variant="primary" icon={MagicWandIcon} disabled={!text.trim() || !services.humanizer || invalidPreservation} onClick={submit}>
-              Humanize
-            </Button>
+            <ComposerActions
+              cost={<CostEstimate words={countWords(text)} humanizeWords={humanizeWordCount(text, prefs)} humanizeModel={prefs.model} pangramModel={thenCheckModel(prefs, services)} />}
+            >
+              <Button variant="primary" icon={MagicWandIcon} disabled={!text.trim() || !services.humanizer || invalidPreservation} onClick={submit}>
+                Humanize
+              </Button>
+            </ComposerActions>
           </>
         }
       />

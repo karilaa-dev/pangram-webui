@@ -45,3 +45,13 @@ export function Composer({
     </LayerCard>
   );
 }
+
+/** The submit button and its cost estimate. Stays right-aligned, even when the footer wraps. */
+export function ComposerActions({ cost, children }: { cost: ReactNode; children: ReactNode }) {
+  return (
+    <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
+      {cost}
+      {children}
+    </div>
+  );
+}
